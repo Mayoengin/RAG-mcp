@@ -1,0 +1,7 @@
+# Python dependencies for RAG
+fastapi
+pydantic
+uvicorn
+sentence-transformers
+pymongo
+python-dotenv
