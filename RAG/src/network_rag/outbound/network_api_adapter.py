@@ -3,6 +3,7 @@
 
 import aiohttp
 import asyncio
+import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
@@ -42,43 +43,48 @@ class NetworkAPIAdapter(NetworkPort):
         
         session = await self._get_session()
         
-        try:
-            # Build query parameters from filters
-            params = self._build_query_params(filters)
-            
-            async with session.get(f"{self.base_url}/ftth_olt", params=params) as response:
-                await self._check_response_status(response, "fetch_ftth_olts")
+        for attempt in range(self.max_retries):
+            try:
+                # Build query parameters from filters
+                params = self._build_query_params(filters)
                 
-                data = await response.json()
-                raw_olts = data.get("data", [])
-                
-                # Convert raw data to domain models
-                olts = []
-                for raw_olt in raw_olts:
-                    try:
-                        olt = self._convert_raw_to_domain_model(raw_olt)
-                        
-                        # Apply client-side filtering if needed
-                        if self._matches_filters(olt, filters):
-                            olts.append(olt)
+                async with session.get(f"{self.base_url}/ftth_olt", params=params) as response:
+                    await self._check_response_status(response, "fetch_ftth_olts")
                     
-                    except Exception as e:
-                        # Log conversion error but continue processing others
-                        print(f"Warning: Failed to convert OLT {raw_olt.get('name', 'unknown')}: {e}")
-                        continue
+                    data = await response.json()
+                    raw_olts = data.get("data", [])
+                    
+                    # Convert raw data to domain models
+                    olts = []
+                    for raw_olt in raw_olts:
+                        try:
+                            olt = self._convert_raw_to_domain_model(raw_olt)
+                            
+                            # Apply client-side filtering if needed
+                            if self._matches_filters(olt, filters):
+                                olts.append(olt)
+                        
+                        except Exception as e:
+                            # Log conversion error but continue processing others
+                            print(f"Warning: Failed to convert OLT {raw_olt.get('name', 'unknown')}: {e}")
+                            continue
+                    
+                    return olts
+                    
+            except aiohttp.ClientError as e:
+                if attempt == self.max_retries - 1:  # Last attempt
+                    raise NetworkAPIError(
+                        api_endpoint="/ftth_olt",
+                        message=f"Network request failed after {self.max_retries} attempts: {str(e)}"
+                    )
+                await asyncio.sleep(2 ** attempt)  # Exponential backoff
+                continue
                 
-                return olts
-                
-        except aiohttp.ClientError as e:
-            raise NetworkAPIError(
-                api_endpoint="/ftth_olt",
-                message=f"Network request failed: {str(e)}"
-            )
-        except Exception as e:
-            raise NetworkAPIError(
-                api_endpoint="/ftth_olt",
-                message=f"FTTH OLT fetch failed: {str(e)}"
-            )
+            except Exception as e:
+                raise NetworkAPIError(
+                    api_endpoint="/ftth_olt",
+                    message=f"FTTH OLT fetch failed: {str(e)}"
+                )
     
     async def get_ftth_olt_by_id(self, olt_id: str) -> Optional[FTTHOLTResource]:
         """Get specific FTTH OLT by ID"""
@@ -147,4 +153,322 @@ class NetworkAPIAdapter(NetworkPort):
                     message=f"Status check failed: {str(e)}"
                 )
     
-    async def validate_network_config(self, config: Dict[str, Any])
+    async def validate_network_config(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate network configuration"""
+        
+        session = await self._get_session()
+        
+        try:
+            payload = {"configuration": config}
+            
+            async with session.post(f"{self.base_url}/validate", json=payload) as response:
+                await self._check_response_status(response, "validate_network_config")
+                
+                data = await response.json()
+                return {
+                    "is_valid": data.get("valid", False),
+                    "errors": data.get("errors", []),
+                    "warnings": data.get("warnings", []),
+                    "suggestions": data.get("suggestions", [])
+                }
+                
+        except Exception as e:
+            raise NetworkAPIError(
+                api_endpoint="/validate",
+                message=f"Configuration validation failed: {str(e)}"
+            )
+    
+    async def get_network_statistics(
+        self, 
+        resource_id: str, 
+        time_range: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Get network statistics for a resource"""
+        
+        session = await self._get_session()
+        
+        try:
+            params = {}
+            if time_range:
+                params["time_range"] = time_range
+            
+            async with session.get(
+                f"{self.base_url}/statistics/{resource_id}", 
+                params=params
+            ) as response:
+                await self._check_response_status(response, "get_network_statistics")
+                
+                data = await response.json()
+                return {
+                    "resource_id": resource_id,
+                    "time_range": time_range or "1h",
+                    "metrics": data.get("metrics", {}),
+                    "performance": data.get("performance", {}),
+                    "utilization": data.get("utilization", {}),
+                    "collected_at": data.get("timestamp", datetime.utcnow().isoformat())
+                }
+                
+        except Exception as e:
+            raise NetworkAPIError(
+                api_endpoint=f"/statistics/{resource_id}",
+                message=f"Statistics retrieval failed: {str(e)}"
+            )
+    
+    async def search_network_resources(
+        self, 
+        query: str, 
+        resource_types: Optional[List[str]] = None,
+        limit: int = 50
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Search across network resources"""
+        
+        session = await self._get_session()
+        
+        try:
+            payload = {
+                "query": query,
+                "resource_types": resource_types or ["ftth_olt"],
+                "limit": limit
+            }
+            
+            async with session.post(f"{self.base_url}/search", json=payload) as response:
+                await self._check_response_status(response, "search_network_resources")
+                
+                data = await response.json()
+                
+                # Organize results by resource type
+                organized_results = {}
+                for resource_type in payload["resource_types"]:
+                    organized_results[resource_type] = data.get(resource_type, [])
+                
+                return organized_results
+                
+        except Exception as e:
+            raise NetworkAPIError(
+                api_endpoint="/search",
+                message=f"Network search failed: {str(e)}"
+            )
+    
+    async def get_api_health(self) -> Dict[str, Any]:
+        """Check API health and connectivity"""
+        
+        session = await self._get_session()
+        
+        try:
+            start_time = datetime.utcnow()
+            
+            async with session.get(f"{self.base_url}/health") as response:
+                end_time = datetime.utcnow()
+                response_time = (end_time - start_time).total_seconds() * 1000
+                
+                if response.status == 200:
+                    data = await response.json()
+                    return {
+                        "status": "healthy",
+                        "response_time_ms": response_time,
+                        "api_version": data.get("version", "unknown"),
+                        "timestamp": end_time.isoformat(),
+                        "details": data
+                    }
+                else:
+                    return {
+                        "status": "unhealthy",
+                        "response_time_ms": response_time,
+                        "status_code": response.status,
+                        "timestamp": end_time.isoformat()
+                    }
+                    
+        except Exception as e:
+            return {
+                "status": "unreachable",
+                "error": str(e),
+                "timestamp": datetime.utcnow().isoformat()
+            }
+    
+    # Helper methods
+    
+    def _build_query_params(self, filters: Optional[Dict[str, Any]]) -> Dict[str, Any]:
+        """Build query parameters from filters"""
+        if not filters:
+            return {}
+        
+        params = {}
+        
+        # Map domain filters to API parameters
+        filter_mapping = {
+            "region": "region",
+            "environment": "env",
+            "managed_by_inmanta": "managed",
+            "connection_type": "connection",
+            "name": "name"
+        }
+        
+        for domain_key, api_key in filter_mapping.items():
+            if domain_key in filters:
+                params[api_key] = filters[domain_key]
+        
+        return params
+    
+    def _convert_raw_to_domain_model(self, raw_data: Dict[str, Any]) -> FTTHOLTResource:
+        """Convert raw API data to domain model"""
+        
+        try:
+            # Map API response to domain model fields
+            domain_data = {
+                "name": raw_data.get("name", ""),
+                "ftth_olt_id": raw_data.get("id", raw_data.get("olt_id", "")),
+                "region": raw_data.get("region", ""),
+                "environment": Environment(raw_data.get("environment", "TEST")),
+                "managed_by_inmanta": raw_data.get("managed_by_inmanta", False),
+                "service_configs": raw_data.get("service_configs", {}),
+                "created_at": self._parse_datetime(raw_data.get("created_at")),
+                "updated_at": self._parse_datetime(raw_data.get("updated_at"))
+            }
+            
+            # Handle connection type mapping
+            if "connection_type" in raw_data:
+                connection_str = raw_data["connection_type"]
+                try:
+                    domain_data["connection_type"] = ConnectionType(connection_str)
+                except ValueError:
+                    # Handle API variations
+                    connection_mapping = {
+                        "10G": ConnectionType.SINGLE_10G,
+                        "10g": ConnectionType.SINGLE_10G,
+                        "4x10G": ConnectionType.QUAD_10G,
+                        "4x10g": ConnectionType.QUAD_10G,
+                        "100G": ConnectionType.SINGLE_100G,
+                        "100g": ConnectionType.SINGLE_100G
+                    }
+                    domain_data["connection_type"] = connection_mapping.get(connection_str)
+            
+            # Handle host address
+            if "host_address" in raw_data:
+                domain_data["host_address"] = raw_data["host_address"]
+            elif "oam_host" in raw_data:
+                domain_data["host_address"] = raw_data["oam_host"]
+            elif "management_ip" in raw_data:
+                domain_data["host_address"] = raw_data["management_ip"]
+            
+            return FTTHOLTResource(**domain_data)
+            
+        except Exception as e:
+            raise ValueError(f"Failed to convert raw data to domain model: {e}")
+    
+    def _matches_filters(self, olt: FTTHOLTResource, filters: Optional[Dict[str, Any]]) -> bool:
+        """Check if OLT matches client-side filters"""
+        if not filters:
+            return True
+        
+        # Additional client-side filtering for complex criteria
+        for key, value in filters.items():
+            if key == "bandwidth_min" and olt.calculate_bandwidth_gbps() < value:
+                return False
+            elif key == "has_complete_config" and value != olt.has_complete_config():
+                return False
+            elif key == "is_production" and value != olt.is_production():
+                return False
+        
+        return True
+    
+    async def _get_individual_statuses(self, resource_ids: List[str]) -> Dict[str, str]:
+        """Fallback method to get statuses individually"""
+        session = await self._get_session()
+        statuses = {}
+        
+        # Use semaphore to limit concurrent requests
+        semaphore = asyncio.Semaphore(5)
+        
+        async def get_single_status(resource_id: str):
+            async with semaphore:
+                try:
+                    async with session.get(f"{self.base_url}/status/{resource_id}") as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            return resource_id, data.get("status", "unknown")
+                        else:
+                            return resource_id, "error"
+                except Exception:
+                    return resource_id, "unreachable"
+        
+        # Execute all status requests concurrently
+        tasks = [get_single_status(resource_id) for resource_id in resource_ids]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        
+        for result in results:
+            if isinstance(result, tuple):
+                resource_id, status = result
+                statuses[resource_id] = status
+            else:
+                # Handle exceptions
+                pass
+        
+        return statuses
+    
+    def _parse_datetime(self, datetime_str: Optional[str]) -> datetime:
+        """Parse datetime string from API response"""
+        if not datetime_str:
+            return datetime.utcnow()
+        
+        try:
+            # Try common datetime formats
+            formats = [
+                "%Y-%m-%dT%H:%M:%S.%fZ",  # ISO with microseconds
+                "%Y-%m-%dT%H:%M:%SZ",     # ISO without microseconds
+                "%Y-%m-%d %H:%M:%S",      # SQL datetime
+                "%Y-%m-%d"                # Date only
+            ]
+            
+            for fmt in formats:
+                try:
+                    return datetime.strptime(datetime_str, fmt)
+                except ValueError:
+                    continue
+            
+            # If all formats fail, return current time
+            return datetime.utcnow()
+            
+        except Exception:
+            return datetime.utcnow()
+    
+    async def _check_response_status(self, response: aiohttp.ClientResponse, operation: str):
+        """Check response status and raise appropriate exceptions"""
+        if response.status >= 400:
+            error_text = await response.text()
+            
+            if response.status == 401:
+                raise NetworkAPIError(
+                    api_endpoint=str(response.url),
+                    status_code=response.status,
+                    message=f"Authentication failed for {operation}"
+                )
+            elif response.status == 403:
+                raise NetworkAPIError(
+                    api_endpoint=str(response.url),
+                    status_code=response.status,
+                    message=f"Access forbidden for {operation}"
+                )
+            elif response.status == 429:
+                raise NetworkAPIError(
+                    api_endpoint=str(response.url),
+                    status_code=response.status,
+                    message=f"Rate limit exceeded for {operation}"
+                )
+            elif response.status >= 500:
+                raise NetworkAPIError(
+                    api_endpoint=str(response.url),
+                    status_code=response.status,
+                    message=f"Server error during {operation}: {error_text}"
+                )
+            else:
+                raise NetworkAPIError(
+                    api_endpoint=str(response.url),
+                    status_code=response.status,
+                    message=f"HTTP {response.status} error during {operation}: {error_text}"
+                )
+    
+    async def close(self):
+        """Close HTTP session"""
+        if self.session:
+            await self.session.close()
+            self.session = None

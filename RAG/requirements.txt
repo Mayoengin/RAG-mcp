@@ -1,7 +1,36 @@
-# Python dependencies for RAG
-fastapi
-pydantic
-uvicorn
-sentence-transformers
-pymongo
-python-dotenv
+# Core framework dependencies
+pydantic>=2.0.0
+asyncio-mqtt>=0.16.0
+
+# HTTP clients and server
+aiohttp>=3.8.0
+fastapi>=0.100.0
+uvicorn>=0.20.0
+
+# Database and storage
+motor>=3.0.0  # Async MongoDB driver
+pymongo>=4.0.0
+
+# Machine Learning and NLP
+sentence-transformers>=2.2.0
+torch>=2.0.0  # Required by sentence-transformers
+transformers>=4.30.0
+numpy>=1.24.0
+
+# Environment and configuration
+python-dotenv>=1.0.0
+pyyaml>=6.0  # Optional for YAML config files
+
+# Development and testing (optional)
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+black>=23.0.0
+mypy>=1.0.0
+
+# Optional REST API dependencies
+# Uncomment if using REST API mode
+# fastapi>=0.100.0
+# uvicorn>=0.20.0
+
+# Optional caching
+# redis>=4.0.0  # If using Redis for caching instead of file cache
