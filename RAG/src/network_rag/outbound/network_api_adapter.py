@@ -6,8 +6,10 @@ import asyncio
 import json
 from typing import List, Dict, Any, Optional
 from datetime import datetime
+from pathlib import Path
 
 from ..models import FTTHOLTResource, Environment, ConnectionType, NetworkPort, NetworkAPIError
+from ..infrastructure.norm_api_config import get_api_config, get_request_config
 
 
 class NetworkAPIAdapter(NetworkPort):
@@ -25,22 +27,104 @@ class NetworkAPIAdapter(NetworkPort):
         self.timeout = timeout
         self.max_retries = max_retries
         self.session = None
+        
+        # Check if using local files instead of API
+        self.use_local_files = base_url.startswith("file://") or api_key == "local_files"
+        
+        # Local JSON file paths
+        if self.use_local_files:
+            self.local_data_path = Path("/Users/mayo.eid/Desktop/RAG")
+            self.local_files = {
+                'ftth_olt': self.local_data_path / 'ftth_olt.json',
+                'lag': self.local_data_path / 'lag.json',
+                'pxc': self.local_data_path / 'pxc.json',
+                'circuit': self.local_data_path / 'circuit.json',
+                'team': self.local_data_path / 'team.json',
+                'mobile_modem': self.local_data_path / 'mobile_modem.json'
+            }
+        
+        # Load NORM API configuration (only if not using local files)
+        if not self.use_local_files:
+            self.norm_config = get_api_config()
+            self.resource_configs = {
+                'ftth_olt': get_request_config('ftth_olt'),
+                'lag': get_request_config('lag'),
+                'pxc': get_request_config('pxc'),
+                'circuit': get_request_config('circuit'),
+                'team': get_request_config('team'),
+                'mobile_modem': get_request_config('mobile_modem')
+            }
     
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session with proper headers and timeout"""
-        if self.session is None:
-            headers = {
-                'X-API-Key': self.api_key,
-                'Content-Type': 'application/json',
-                'User-Agent': 'NetworkRAG/1.0'
-            }
+        if self.session is None and not self.use_local_files:
+            # Use NORM API headers configuration
+            from ..infrastructure.norm_api_config import api_config_manager
+            headers = api_config_manager.get_headers()
+            headers['User-Agent'] = 'NetworkRAG/1.0'
+            
             timeout = aiohttp.ClientTimeout(total=self.timeout)
             self.session = aiohttp.ClientSession(headers=headers, timeout=timeout)
         return self.session
     
+    async def _load_local_json(self, resource_type: str) -> List[Dict[str, Any]]:
+        """Load data from local JSON file"""
+        if not self.use_local_files:
+            raise ValueError("Local files not enabled")
+        
+        file_path = self.local_files.get(resource_type)
+        if not file_path or not file_path.exists():
+            print(f"Warning: Local file not found: {file_path}")
+            return []
+        
+        try:
+            with open(file_path, 'r') as f:
+                data = json.load(f)
+                # Handle different JSON structures
+                if isinstance(data, list):
+                    return data
+                elif isinstance(data, dict) and 'data' in data:
+                    return data['data']
+                elif isinstance(data, dict):
+                    return [data]  # Single object
+                else:
+                    return []
+        except Exception as e:
+            print(f"Warning: Failed to load {file_path}: {e}")
+            return []
+    
     async def fetch_ftth_olts(self, filters: Optional[Dict[str, Any]] = None) -> List[FTTHOLTResource]:
         """Fetch FTTH OLT resources with optional filters"""
         
+        # Use local files if configured
+        if self.use_local_files:
+            try:
+                raw_olts = await self._load_local_json('ftth_olt')
+                
+                # Convert raw data to domain models
+                olts = []
+                for raw_olt in raw_olts:
+                    try:
+                        olt = self._convert_raw_to_domain_model(raw_olt)
+                        
+                        # Apply client-side filtering if needed
+                        if self._matches_filters(olt, filters):
+                            olts.append(olt)
+                    
+                    except Exception as e:
+                        # Log conversion error but continue processing others
+                        print(f"Warning: Failed to convert OLT {raw_olt.get('name', 'unknown')}: {e}")
+                        continue
+                
+                return olts
+                
+            except Exception as e:
+                raise NetworkAPIError(
+                    api_endpoint="local_file:ftth_olt.json",
+                    message=f"Local file fetch failed: {str(e)}"
+                )
+        
+        # Original API logic
         session = await self._get_session()
         
         for attempt in range(self.max_retries):
@@ -48,7 +132,11 @@ class NetworkAPIAdapter(NetworkPort):
                 # Build query parameters from filters
                 params = self._build_query_params(filters)
                 
-                async with session.get(f"{self.base_url}/ftth_olt", params=params) as response:
+                # Use NORM API configuration for FTTH OLT endpoint
+                ftth_olt_config = self.resource_configs.get('ftth_olt')
+                api_url = ftth_olt_config['url'] if ftth_olt_config else f"{self.base_url}/ftth_olt"
+                
+                async with session.get(api_url, params=params) as response:
                     await self._check_response_status(response, "fetch_ftth_olts")
                     
                     data = await response.json()
@@ -250,14 +338,62 @@ class NetworkAPIAdapter(NetworkPort):
             )
     
     async def get_api_health(self) -> Dict[str, Any]:
-        """Check API health and connectivity"""
+        """Check API health and connectivity using NORM API endpoints"""
         
+        # Use local files health check if configured
+        if self.use_local_files:
+            try:
+                start_time = datetime.utcnow()
+                
+                # Check if local files exist and are readable
+                ftth_olt_data = await self._load_local_json('ftth_olt')
+                
+                end_time = datetime.utcnow()
+                response_time = (end_time - start_time).total_seconds() * 1000
+                
+                return {
+                    "status": "healthy",
+                    "response_time_ms": response_time,
+                    "api_version": "Local JSON Files",
+                    "timestamp": end_time.isoformat(),
+                    "details": {
+                        "data_source": "local_files",
+                        "ftth_olt_records": len(ftth_olt_data),
+                        "local_files_available": [
+                            name for name, path in self.local_files.items()
+                            if path.exists()
+                        ]
+                    }
+                }
+                
+            except Exception as e:
+                return {
+                    "status": "unhealthy",
+                    "error": f"Local files check failed: {str(e)}",
+                    "timestamp": datetime.utcnow().isoformat(),
+                    "details": {
+                        "data_source": "local_files",
+                        "local_files_missing": [
+                            name for name, path in self.local_files.items()
+                            if not path.exists()
+                        ]
+                    }
+                }
+        
+        # Original API health check
         session = await self._get_session()
         
         try:
             start_time = datetime.utcnow()
             
-            async with session.get(f"{self.base_url}/health") as response:
+            # Try FTTH OLT endpoint as health check since NORM might not have /health
+            ftth_olt_config = self.resource_configs.get('ftth_olt')
+            health_url = ftth_olt_config['url'] if ftth_olt_config else f"{self.base_url}/ftth_olt"
+            
+            # Add limit=1 to get minimal response for health check
+            params = {"limit": 1}
+            
+            async with session.get(health_url, params=params) as response:
                 end_time = datetime.utcnow()
                 response_time = (end_time - start_time).total_seconds() * 1000
                 
@@ -266,15 +402,36 @@ class NetworkAPIAdapter(NetworkPort):
                     return {
                         "status": "healthy",
                         "response_time_ms": response_time,
-                        "api_version": data.get("version", "unknown"),
+                        "api_version": "NORM API v2",
                         "timestamp": end_time.isoformat(),
-                        "details": data
+                        "details": {
+                            "endpoint_tested": "ftth_olt",
+                            "data_count": len(data.get("data", []) if isinstance(data, dict) else [])
+                        }
                     }
-                else:
+                elif response.status == 401:
                     return {
                         "status": "unhealthy",
                         "response_time_ms": response_time,
                         "status_code": response.status,
+                        "error": "Authentication failed - check API key",
+                        "timestamp": end_time.isoformat()
+                    }
+                elif response.status == 403:
+                    return {
+                        "status": "unhealthy",
+                        "response_time_ms": response_time,
+                        "status_code": response.status,
+                        "error": "Access forbidden - check permissions",
+                        "timestamp": end_time.isoformat()
+                    }
+                else:
+                    error_text = await response.text()
+                    return {
+                        "status": "unhealthy",
+                        "response_time_ms": response_time,
+                        "status_code": response.status,
+                        "error": f"HTTP {response.status}: {error_text[:100]}",
                         "timestamp": end_time.isoformat()
                     }
                     

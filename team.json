@@ -1,0 +1,92 @@
+{
+  "data": [
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "f10b7ddf-1886-4027-9635-25dd7b56842e",
+      "team_name": "ORPHAN"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "a7d74537-e453-4bdc-8c1f-ecb119bb4076",
+      "team_name": "DTV"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "d9bb40c9-3c47-401f-b9af-a2c03baa2159",
+      "team_name": "MOBILE"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "41e4e7b6-0e64-4d11-8744-f1be6e32ccac",
+      "team_name": "NAS"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "8d958dda-390a-44c6-9c6e-698111046f74",
+      "team_name": "IT"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "2561d5bd-6fa5-4104-8fa7-76bbbddd8f5f",
+      "team_name": "IPOPS"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "7133828d-b7d7-4802-9e25-d9e479b501b3",
+      "team_name": "ANTS"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "d89f8270-446a-4a72-9df0-538692f962c8",
+      "team_name": "VOICE"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "0d2f3cf1-022d-46c3-9f93-feb1bd20c5a5",
+      "team_name": "TX"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "c561c724-b917-4f0c-a400-caf3c0f50828",
+      "team_name": "INFRA"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "a0c809d2-1583-4bef-a566-9c65f2e4fdea",
+      "team_name": "COMVERSE"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "c98dfd14-852c-49db-b389-1292247c4ece",
+      "team_name": "SAMSS"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "6e2c156f-4f38-40cc-91b1-e5a37c19fcca",
+      "team_name": "IPPROF"
+    },
+    {
+      "contact_information": null,
+      "description": null,
+      "team_id": "8ce5b702-22eb-456e-9914-1b70ee75e816",
+      "team_name": "WIFIOPS"
+    }
+  ],
+  "meta": {
+    "object_count": 14,
+    "query_duration": "0:00:00.006442"
+  }
+}

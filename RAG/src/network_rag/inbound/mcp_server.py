@@ -215,31 +215,56 @@ class MCPServerAdapter:
         })
         
         # =====================================
-        # TODO: ADD YOUR CUSTOM TOOLS HERE
+        # SIMPLE NETWORK TOOLS
         # =====================================
-        # This is where you can add additional tools specific to your use case.
-        # Examples might include:
-        # - Network topology visualization tools
-        # - Performance monitoring tools
-        # - Configuration deployment tools
-        # - Custom reporting tools
-        # - Integration with other network management systems
-        
-        # Template for adding a new tool:
-        # tools.append({
-        #     "name": "your_tool_name",
-        #     "description": "Description of what your tool does",
-        #     "inputSchema": {
-        #         "type": "object",
-        #         "properties": {
-        #             "param1": {
-        #                 "type": "string",
-        #                 "description": "Description of parameter"
-        #             }
-        #         },
-        #         "required": ["param1"]
-        #     }
-        # })
+        tools.append({
+            "name": "list_network_devices",
+            "description": "List network devices by type with filtering options",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "device_type": {
+                        "type": "string",
+                        "description": "Type of network device",
+                        "enum": ["ftth_olt", "lag", "pxc", "mobile_modem", "team", "all"],
+                        "default": "all"
+                    },
+                    "limit": {
+                        "type": "integer",
+                        "description": "Maximum number of devices to return",
+                        "default": 10,
+                        "minimum": 1,
+                        "maximum": 50
+                    },
+                    "filter": {
+                        "type": "string",
+                        "description": "Optional filter by name or description"
+                    }
+                },
+                "required": []
+            }
+        })
+
+        tools.append({
+            "name": "get_device_details",
+            "description": "Get detailed information about a specific network device",
+            "inputSchema": {
+                "type": "object",
+                "properties": {
+                    "device_name": {
+                        "type": "string", 
+                        "description": "Name or ID of the device"
+                    },
+                    "device_type": {
+                        "type": "string",
+                        "description": "Type of device to search",
+                        "enum": ["ftth_olt", "lag", "pxc", "mobile_modem", "team"],
+                        "default": "ftth_olt"
+                    }
+                },
+                "required": ["device_name"]
+            }
+        })
         
         return tools
     
@@ -333,11 +358,13 @@ class MCPServerAdapter:
                 result = await self._execute_system_analytics(arguments)
             
             # =====================================
-            # TODO: ADD YOUR CUSTOM TOOL HANDLERS HERE
+            # SIMPLE NETWORK TOOL HANDLERS
             # =====================================
-            # Add handlers for your custom tools:
-            # elif tool_name == "your_tool_name":
-            #     result = await self._execute_your_tool(arguments)
+            elif tool_name == "list_network_devices":
+                result = await self._execute_list_network_devices(arguments)
+            
+            elif tool_name == "get_device_details":
+                result = await self._execute_get_device_details(arguments)
             
             else:
                 return self._create_error_response(
@@ -388,55 +415,111 @@ class MCPServerAdapter:
     # =====================================
     
     async def _execute_network_query(self, arguments: Dict[str, Any]) -> str:
-        """Execute network resource query"""
+        """Execute network resource query using actual local data"""
         
         query = arguments.get("query", "")
         include_recommendations = arguments.get("include_recommendations", True)
         session_id = arguments.get("session_id")
         
-        # Create conversation context if session provided
-        conversation_id = None
-        if session_id:
-            conversation_id = f"mcp_session_{session_id}_{int(datetime.utcnow().timestamp())}"
-        
-        # Execute query through controller
-        query_result = await self.query_controller.process_query(
-            query=query,
-            conversation_id=conversation_id,
-            user_context={"source": "mcp", "session_id": session_id}
-        )
-        
-        # Format response for LLM consumption
         response_parts = [
             f"# Network Query Results\n",
-            f"**Query:** {query}\n",
-            f"**Confidence:** {query_result.get_confidence_level().value.replace('_', ' ').title()}\n\n",
-            f"## Analysis\n{query_result.primary_answer}\n"
+            f"**Query:** {query}\n\n"
         ]
         
-        # Add network intelligence if available
-        if "network_intelligence" in query_result.supporting_data:
-            network_data = query_result.supporting_data["network_intelligence"]
-            response_parts.append("\n## Network Resources Found\n")
+        try:
+            # Get network API adapter directly to fetch real data
+            network_adapter = self.query_controller.network_port
             
-            for i, olt in enumerate(network_data[:5]):  # Limit to top 5
-                status_icon = "⚠️" if olt.get("action_required") else "✅"
-                response_parts.append(
-                    f"{status_icon} **{olt['name']}** ({olt['environment']})\n"
-                    f"   - Connection: {olt.get('connection_type', 'N/A')} | "
-                    f"Bandwidth: {olt['bandwidth_gbps']}Gbps\n"
-                    f"   - Config Complete: {'Yes' if olt.get('complete_config') else 'No'}\n"
-                )
+            # Fetch actual FTTH OLT data from local files
+            ftth_olts = await network_adapter.fetch_ftth_olts()
+            
+            # Also get other device types mentioned in query
+            lag_data = await network_adapter._load_local_json('lag') if 'lag' in query.lower() else []
+            pxc_data = await network_adapter._load_local_json('pxc') if 'pxc' in query.lower() else []
+            mobile_data = await network_adapter._load_local_json('mobile_modem') if 'mobile' in query.lower() else []
+            team_data = await network_adapter._load_local_json('team') if 'team' in query.lower() else []
+            
+            # Format FTTH OLT data
+            if ftth_olts or 'ftth' in query.lower() or 'olt' in query.lower():
+                response_parts.append("## FTTH OLT Devices Found\n")
+                if ftth_olts:
+                    for i, olt in enumerate(ftth_olts[:10]):  # Show first 10
+                        health = olt.get_health_summary()
+                        status_icon = "✅" if health.get('complete_config') else "⚠️"
+                        response_parts.extend([
+                            f"{status_icon} **{health['name']}**\n",
+                            f"   - Environment: {health['environment']}\n",
+                            f"   - Bandwidth: {health['bandwidth_gbps']}Gbps\n",
+                            f"   - Managed by Inmanta: {'Yes' if health['managed_by_inmanta'] else 'No'}\n",
+                            f"   - Service Count: {health['service_count']}\n\n"
+                        ])
+                else:
+                    response_parts.append("No FTTH OLT devices found in local data.\n\n")
+            
+            # Format LAG data if relevant
+            if lag_data:
+                response_parts.append("## LAG Devices\n")
+                for item in lag_data[:5]:
+                    response_parts.extend([
+                        f"- **{item.get('device_name', 'Unknown')}** (LAG ID: {item.get('lag_id', 'N/A')})\n",
+                        f"  Description: {item.get('description', 'No description')}\n"
+                    ])
+                response_parts.append("\n")
+            
+            # Format PXC data if relevant
+            if pxc_data:
+                response_parts.append("## PXC Devices\n")
+                for item in pxc_data[:5]:
+                    response_parts.extend([
+                        f"- **{item.get('device_name', 'Unknown')}** (PXC ID: {item.get('pxc_id', 'N/A')})\n",
+                        f"  Description: {item.get('description', 'No description')}\n"
+                    ])
+                response_parts.append("\n")
+            
+            # Format Mobile data if relevant
+            if mobile_data:
+                response_parts.append("## Mobile Modems\n")
+                for item in mobile_data[:5]:
+                    response_parts.extend([
+                        f"- **{item.get('serial_number', 'Unknown')}** ({item.get('hardware_type', 'Unknown')})\n",
+                        f"  Subscriber: {item.get('mobile_subscriber_id', 'N/A')}\n"
+                    ])
+                response_parts.append("\n")
+            
+            # Format Team data if relevant
+            if team_data:
+                response_parts.append("## Teams\n")
+                for item in team_data[:5]:
+                    response_parts.extend([
+                        f"- **{item.get('team_name', 'Unknown')}**\n",
+                        f"  ID: {item.get('team_id', 'N/A')}\n"
+                    ])
+                response_parts.append("\n")
+            
+            # Add summary
+            total_devices = len(ftth_olts) + len(lag_data) + len(pxc_data) + len(mobile_data) + len(team_data)
+            response_parts.append(f"**Total devices found:** {total_devices}\n")
+            
+            # Add recommendations if requested
+            if include_recommendations:
+                response_parts.append("\n## Recommendations\n")
+                if ftth_olts:
+                    incomplete_olts = [olt for olt in ftth_olts if not olt.get_health_summary().get('complete_config')]
+                    if incomplete_olts:
+                        response_parts.append(f"- Review configuration for {len(incomplete_olts)} OLTs with incomplete configs\n")
+                    
+                    production_olts = [olt for olt in ftth_olts if olt.is_production()]
+                    if production_olts:
+                        response_parts.append(f"- Monitor {len(production_olts)} production OLTs for performance\n")
                 
-                if olt.get("insights", {}).get("issues"):
-                    issues = olt["insights"]["issues"][:2]  # Top 2 issues
-                    response_parts.append(f"   - Issues: {', '.join(issues)}\n")
+                response_parts.append("- Use `get_device_details` for specific device information\n")
         
-        # Add recommendations if requested
-        if include_recommendations and query_result.suggested_questions:
-            response_parts.append("\n## Follow-up Suggestions\n")
-            for suggestion in query_result.suggested_questions[:3]:
-                response_parts.append(f"- {suggestion}\n")
+        except Exception as e:
+            response_parts.extend([
+                "## Error\n",
+                f"❌ Failed to retrieve network data: {str(e)}\n",
+                "Please check the local JSON files and try again.\n"
+            ])
         
         return "".join(response_parts)
     
@@ -662,19 +745,226 @@ class MCPServerAdapter:
         return "".join(response_parts)
     
     # =====================================
-    # TODO: ADD YOUR CUSTOM TOOL EXECUTION METHODS HERE
+    # SIMPLE NETWORK TOOL EXECUTION METHODS
     # =====================================
-    # Add execution methods for your custom tools:
-    # 
-    # async def _execute_your_tool(self, arguments: Dict[str, Any]) -> str:
-    #     """Execute your custom tool"""
-    #     
-    #     param1 = arguments.get("param1", "")
-    #     
-    #     # Your tool logic here
-    #     result = "Your tool result"
-    #     
-    #     return result
+    
+    async def _execute_list_network_devices(self, arguments: Dict[str, Any]) -> str:
+        """Execute list network devices tool"""
+        
+        device_type = arguments.get("device_type", "all")
+        limit = arguments.get("limit", 10)
+        filter_text = arguments.get("filter", "")
+        
+        response_parts = [f"# Network Devices List\n"]
+        
+        if device_type == "all":
+            response_parts.append(f"**Showing all device types** (limit: {limit})\n\n")
+        else:
+            response_parts.append(f"**Device Type:** {device_type.replace('_', ' ').title()} (limit: {limit})\n\n")
+        
+        try:
+            # Get network API adapter from query controller
+            network_adapter = self.query_controller.network_port
+            
+            devices_found = 0
+            
+            # Load different device types based on request
+            if device_type in ["ftth_olt", "all"]:
+                ftth_data = await network_adapter._load_local_json('ftth_olt')
+                response_parts.append("## FTTH OLT Devices\n")
+                
+                for item in ftth_data[:limit if device_type == "ftth_olt" else 5]:
+                    name = item.get('name', 'Unknown')
+                    if not filter_text or filter_text.lower() in name.lower():
+                        environment = item.get('environment', 'Unknown')
+                        esi_name = item.get('cin', {}).get('esi_name', 'N/A')
+                        response_parts.append(f"- **{name}** (Env: {environment})\n")
+                        response_parts.append(f"  ESI: {esi_name}\n")
+                        devices_found += 1
+                response_parts.append("\n")
+            
+            if device_type in ["lag", "all"]:
+                lag_data = await network_adapter._load_local_json('lag')
+                response_parts.append("## LAG Devices\n")
+                
+                for item in lag_data[:limit if device_type == "lag" else 5]:
+                    device_name = item.get('device_name', 'Unknown')
+                    description = item.get('description', 'No description')
+                    lag_id = item.get('lag_id', 'N/A')
+                    if not filter_text or filter_text.lower() in device_name.lower() or filter_text.lower() in description.lower():
+                        response_parts.append(f"- **{device_name}** (LAG ID: {lag_id})\n")
+                        response_parts.append(f"  Description: {description}\n")
+                        devices_found += 1
+                response_parts.append("\n")
+            
+            if device_type in ["pxc", "all"]:
+                pxc_data = await network_adapter._load_local_json('pxc')
+                response_parts.append("## PXC Devices\n")
+                
+                for item in pxc_data[:limit if device_type == "pxc" else 5]:
+                    device_name = item.get('device_name', 'Unknown')
+                    description = item.get('description', 'No description')
+                    pxc_id = item.get('pxc_id', 'N/A')
+                    if not filter_text or filter_text.lower() in device_name.lower() or filter_text.lower() in description.lower():
+                        response_parts.append(f"- **{device_name}** (PXC ID: {pxc_id})\n")
+                        response_parts.append(f"  Description: {description}\n")
+                        devices_found += 1
+                response_parts.append("\n")
+            
+            if device_type in ["mobile_modem", "all"]:
+                mobile_data = await network_adapter._load_local_json('mobile_modem')
+                response_parts.append("## Mobile Modems\n")
+                
+                for item in mobile_data[:limit if device_type == "mobile_modem" else 5]:
+                    serial = item.get('serial_number', 'Unknown')
+                    hardware_type = item.get('hardware_type', 'Unknown')
+                    subscriber_id = item.get('mobile_subscriber_id', 'N/A')
+                    if not filter_text or filter_text.lower() in serial.lower() or filter_text.lower() in hardware_type.lower():
+                        response_parts.append(f"- **{serial}** ({hardware_type})\n")
+                        response_parts.append(f"  Subscriber: {subscriber_id}\n")
+                        devices_found += 1
+                response_parts.append("\n")
+            
+            if device_type in ["team", "all"]:
+                team_data = await network_adapter._load_local_json('team')
+                response_parts.append("## Teams\n")
+                
+                for item in team_data[:limit if device_type == "team" else 5]:
+                    team_name = item.get('team_name', 'Unknown')
+                    description = item.get('description', 'No description')
+                    if not filter_text or filter_text.lower() in team_name.lower():
+                        response_parts.append(f"- **{team_name}**\n")
+                        if description:
+                            response_parts.append(f"  Description: {description}\n")
+                        devices_found += 1
+                response_parts.append("\n")
+            
+            if devices_found == 0:
+                response_parts.append("No devices found matching the criteria.\n")
+            else:
+                response_parts.append(f"**Total devices found:** {devices_found}\n")
+            
+        except Exception as e:
+            response_parts.append(f"❌ Error loading device data: {str(e)}\n")
+        
+        return "".join(response_parts)
+    
+    async def _execute_get_device_details(self, arguments: Dict[str, Any]) -> str:
+        """Execute get device details tool"""
+        
+        device_name = arguments.get("device_name", "")
+        device_type = arguments.get("device_type", "ftth_olt")
+        
+        if not device_name:
+            return "# Error\nDevice name is required"
+        
+        response_parts = [
+            f"# Device Details\n",
+            f"**Device:** {device_name}\n",
+            f"**Type:** {device_type.replace('_', ' ').title()}\n\n"
+        ]
+        
+        try:
+            # Get network API adapter from query controller  
+            network_adapter = self.query_controller.network_port
+            
+            # Load data for the specific device type
+            data = await network_adapter._load_local_json(device_type)
+            
+            # Find the specific device
+            device_found = None
+            for item in data:
+                if device_type == "ftth_olt":
+                    if item.get('name', '').lower() == device_name.lower():
+                        device_found = item
+                        break
+                elif device_type == "lag":
+                    if item.get('device_name', '').lower() == device_name.lower():
+                        device_found = item
+                        break
+                elif device_type == "pxc":
+                    if item.get('device_name', '').lower() == device_name.lower():
+                        device_found = item
+                        break
+                elif device_type == "mobile_modem":
+                    if item.get('serial_number', '').lower() == device_name.lower():
+                        device_found = item
+                        break
+                elif device_type == "team":
+                    if item.get('team_name', '').lower() == device_name.lower():
+                        device_found = item
+                        break
+            
+            if not device_found:
+                response_parts.append(f"❌ Device '{device_name}' not found in {device_type} data.\n")
+                return "".join(response_parts)
+            
+            # Format device details based on type
+            if device_type == "ftth_olt":
+                response_parts.extend([
+                    "## Configuration Details\n",
+                    f"**ESI Name:** {device_found.get('cin', {}).get('esi_name', 'N/A')}\n",
+                    f"**ESI:** {device_found.get('cin', {}).get('esi', 'N/A')}\n",
+                    f"**Environment:** {device_found.get('environment', 'Unknown')}\n"
+                ])
+                
+                # BNG information
+                bng = device_found.get('bng', {})
+                if bng:
+                    response_parts.append("\n## BNG Configuration\n")
+                    master = bng.get('node_master', {})
+                    if master:
+                        response_parts.append(f"**Master Node:** {master.get('name', 'N/A')} ({master.get('sys_ip', 'N/A')})\n")
+                    slave = bng.get('node_slave', {})
+                    if slave:
+                        response_parts.append(f"**Slave Node:** {slave.get('name', 'N/A')} ({slave.get('sys_ip', 'N/A')})\n")
+                
+                # CIN information
+                cin = device_found.get('cin', {})
+                if cin.get('nodes'):
+                    response_parts.append("\n## CIN Nodes\n")
+                    for node in cin['nodes'][:3]:  # Show first 3 nodes
+                        response_parts.append(f"**{node.get('name', 'Unknown')}** ({node.get('sys_ip', 'N/A')})\n")
+                        ports = node.get('ports', [])
+                        if ports:
+                            response_parts.append(f"  Ports: {len(ports)} configured\n")
+            
+            elif device_type == "lag":
+                response_parts.extend([
+                    "## LAG Details\n",
+                    f"**LAG ID:** {device_found.get('lag_id', 'N/A')}\n",
+                    f"**Description:** {device_found.get('description', 'No description')}\n",
+                    f"**Admin Key:** {device_found.get('admin_key', 'N/A')}\n"
+                ])
+            
+            elif device_type == "pxc":
+                response_parts.extend([
+                    "## PXC Details\n",
+                    f"**PXC ID:** {device_found.get('pxc_id', 'N/A')}\n",
+                    f"**Description:** {device_found.get('description', 'No description')}\n"
+                ])
+            
+            elif device_type == "mobile_modem":
+                response_parts.extend([
+                    "## Mobile Modem Details\n",
+                    f"**Serial Number:** {device_found.get('serial_number', 'N/A')}\n",
+                    f"**Hardware Type:** {device_found.get('hardware_type', 'Unknown')}\n",
+                    f"**Subscriber ID:** {device_found.get('mobile_subscriber_id', 'N/A')}\n",
+                    f"**Command ID:** {device_found.get('fnt_command_id', 'N/A')}\n"
+                ])
+            
+            elif device_type == "team":
+                response_parts.extend([
+                    "## Team Details\n",
+                    f"**Team ID:** {device_found.get('team_id', 'N/A')}\n",
+                    f"**Description:** {device_found.get('description', 'No description')}\n",
+                    f"**Contact Information:** {device_found.get('contact_information', 'Not available')}\n"
+                ])
+            
+        except Exception as e:
+            response_parts.append(f"❌ Error retrieving device details: {str(e)}\n")
+        
+        return "".join(response_parts)
     
     # =====================================
     # UTILITY METHODS

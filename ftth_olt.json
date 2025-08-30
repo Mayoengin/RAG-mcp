@@ -1,0 +1,2258 @@
+{
+  "data": [
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 7,
+              "connection_profile_vlan_start": 100,
+              "name": "CINMECHA01"
+            },
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 6,
+              "connection_profile_vlan_start": 100,
+              "name": "CINMECHB02"
+            }
+          ],
+          "sap_ingress_pol_id": 30159
+        },
+        "skip_b2b_checks": true,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": null,
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": 330,
+        "abuse_v6_filter_id": 340,
+        "infra_v4_filter_id": 337,
+        "infra_v6_filter_id": 338,
+        "node_master": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGASSE90",
+          "sys_ip": "213.224.245.169"
+        },
+        "node_slave": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGGENT90",
+          "sys_ip": "213.224.245.170"
+        },
+        "sap_egress_pxc_pol_id": 30151,
+        "sap_ingress_pxc_pol_id": 30150
+      },
+      "cin": {
+        "connection_type": null,
+        "esi": "00:00:00:00:00:0C:4D:00:00:00",
+        "esi_name": "FTTH_CINHOBO_OLT17PROP01",
+        "lacp_admin_key": 64,
+        "lag_id": 64,
+        "nodes": [
+          {
+            "name": "CINMECHA01",
+            "ports": [
+              {
+                "description": "OLT17PROP01_NTA_1/1",
+                "identifier": null,
+                "name": "1/1/45"
+              },
+              {
+                "description": "OLT17PROP01_NTA_1/2",
+                "identifier": null,
+                "name": "1/1/46"
+              },
+              {
+                "description": "OLT17PROP01_NTA_1/3",
+                "identifier": null,
+                "name": "1/1/47"
+              },
+              {
+                "description": "OLT17PROP01_NTA_1/4",
+                "identifier": null,
+                "name": "1/1/48"
+              }
+            ],
+            "sys_ip": "213.224.120.71"
+          },
+          {
+            "name": "CINMECHB02",
+            "ports": [
+              {
+                "description": "OLT17PROP01_NTB_1/1",
+                "identifier": null,
+                "name": "1/1/45"
+              },
+              {
+                "description": "OLT17PROP01_NTB_1/2",
+                "identifier": null,
+                "name": "1/1/46"
+              },
+              {
+                "description": "OLT17PROP01_NTB_1/3",
+                "identifier": null,
+                "name": "1/1/47"
+              },
+              {
+                "description": "OLT17PROP01_NTB_1/4",
+                "identifier": null,
+                "name": "1/1/48"
+              }
+            ],
+            "sys_ip": "213.224.120.74"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": 30158,
+        "system_id": "00:00:00:00:0C:4D"
+      },
+      "console_ports": [],
+      "data": {
+        "evpn_service_id": 24911,
+        "sap_egress_gi_pol_id": 99999,
+        "sap_ingress_gi_pol_id": 30148,
+        "vprn_service_id": 24389
+      },
+      "dhcp_v6_ip1": "2a02:1800:110:1::302:1",
+      "dhcp_v6_ip2": "2a02:1800:120:1::302:1",
+      "fip": {
+        "evpn_service_id": 25394
+      },
+      "ftth_olt_id": "77f0da30-e669-4485-ab60-8bbfae655934",
+      "gi_index": 1,
+      "managed_by_inmanta": false,
+      "name": "OLT17PROP01",
+      "oam": {
+        "evpn_service_id": 24912,
+        "host_address": "10.46.192.17",
+        "if_address1": "10.46.192.29/28",
+        "if_address2": "10.46.192.28/28",
+        "subnet": "10.46.192.16/28",
+        "vip_address": "10.46.192.30",
+        "vprn_service_id": 244
+      },
+      "olt_environment": "PRD",
+      "qtag": 2001,
+      "region": "HOBO",
+      "tr069": {
+        "evpn_service_id": 24913,
+        "if_address1": "2a02:181f:a:1::1/64",
+        "if_address2": "2a02:181f:a:1::2/64",
+        "link_address": "2a02:181f:a:1::",
+        "subnet": "2a02:181f:a:1::/64",
+        "vip_address": "2a02:181f:a:1::3/64",
+        "vprn_service_id": 24298
+      },
+      "voice": {
+        "evpn_service_id": 24914,
+        "if_address1": "2a02:181f:c:1::1/64",
+        "if_address2": "2a02:181f:c:1::2/64",
+        "link_address": "2a02:181f:c:1::",
+        "subnet": "2a02:181f:c:1::/64",
+        "vip_address": "2a02:181f:c:1::3/64",
+        "vprn_service_id": 773
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 3,
+              "connection_profile_vlan_start": 100,
+              "name": "CINGENTA01"
+            }
+          ],
+          "sap_ingress_pol_id": 30159
+        },
+        "skip_b2b_checks": true,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": null,
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": 330,
+        "abuse_v6_filter_id": 340,
+        "infra_v4_filter_id": 337,
+        "infra_v6_filter_id": 338,
+        "node_master": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGASSE90",
+          "sys_ip": "213.224.245.169"
+        },
+        "node_slave": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGGENT90",
+          "sys_ip": "213.224.245.170"
+        },
+        "sap_egress_pxc_pol_id": 30151,
+        "sap_ingress_pxc_pol_id": 30150
+      },
+      "cin": {
+        "connection_type": null,
+        "esi": "00:00:00:00:00:0C:CF:00:00:00",
+        "esi_name": "FTTH_CINHOBO_OLT17PROP23",
+        "lacp_admin_key": 64,
+        "lag_id": 64,
+        "nodes": [
+          {
+            "name": "CINGENTA01",
+            "ports": [
+              {
+                "description": "OLT17PROP23_NTA_1/1",
+                "identifier": null,
+                "name": "1/1/45"
+              },
+              {
+                "description": "OLT17PROP23_NTA_1/2",
+                "identifier": null,
+                "name": "1/1/46"
+              },
+              {
+                "description": "OLT17PROP23_NTA_1/3",
+                "identifier": null,
+                "name": "1/1/47"
+              },
+              {
+                "description": "OLT17PROP23_NTA_1/4",
+                "identifier": null,
+                "name": "1/1/48"
+              }
+            ],
+            "sys_ip": "213.224.120.1"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": 30158,
+        "system_id": "00:00:00:00:0C:CF"
+      },
+      "console_ports": [],
+      "data": {
+        "evpn_service_id": 24983,
+        "sap_egress_gi_pol_id": 30149,
+        "sap_ingress_gi_pol_id": 30148,
+        "vprn_service_id": 24389
+      },
+      "dhcp_v6_ip1": "2a02:1800:110:1::302:1",
+      "dhcp_v6_ip2": "2a02:1800:120:1::302:1",
+      "fip": {
+        "evpn_service_id": 25395
+      },
+      "ftth_olt_id": "ac8c97df-d7df-4518-ab29-e96a96f6a286",
+      "gi_index": 1,
+      "managed_by_inmanta": false,
+      "name": "OLT17PROP23",
+      "oam": {
+        "evpn_service_id": 24984,
+        "host_address": "10.46.192.33",
+        "if_address1": "10.46.192.45/28",
+        "if_address2": "10.46.192.44/28",
+        "subnet": "10.46.192.32/28",
+        "vip_address": "10.46.192.46",
+        "vprn_service_id": 244
+      },
+      "olt_environment": "PRD",
+      "qtag": 2002,
+      "region": "HOBO",
+      "tr069": {
+        "evpn_service_id": 24985,
+        "if_address1": "2a02:181f:a:2::1/64",
+        "if_address2": "2a02:181f:a:2::2/64",
+        "link_address": "2a02:181f:a:2::",
+        "subnet": "2a02:181f:a:2::/64",
+        "vip_address": "2a02:181f:a:2::3/64",
+        "vprn_service_id": 24298
+      },
+      "voice": {
+        "evpn_service_id": 24986,
+        "if_address1": "2a02:181f:c:2::1/64",
+        "if_address2": "2a02:181f:c:2::2/64",
+        "link_address": "2a02:181f:c:2::",
+        "subnet": "2a02:181f:c:2::/64",
+        "vip_address": "2a02:181f:c:2::3/64",
+        "vprn_service_id": 773
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 8,
+              "connection_profile_vlan_start": 100,
+              "name": "CINMECHA01"
+            },
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 2,
+              "connection_profile_vlan_start": 100,
+              "name": "CINMECHB01"
+            }
+          ],
+          "sap_ingress_pol_id": 30159
+        },
+        "skip_b2b_checks": true,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": null,
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": null,
+        "abuse_v6_filter_id": null,
+        "infra_v4_filter_id": null,
+        "infra_v6_filter_id": null,
+        "node_master": {
+          "lag_id_side_a": null,
+          "lag_id_side_b": null,
+          "name": "BNGASSE90",
+          "sys_ip": null
+        },
+        "node_slave": null,
+        "sap_egress_pxc_pol_id": null,
+        "sap_ingress_pxc_pol_id": null
+      },
+      "cin": {
+        "connection_type": null,
+        "esi": null,
+        "esi_name": null,
+        "lacp_admin_key": null,
+        "lag_id": null,
+        "nodes": [
+          {
+            "name": "CINMECHA01",
+            "ports": [
+              {
+                "description": "OLT17PROP02_NTA_1/1",
+                "identifier": null,
+                "name": "1/1/1"
+              },
+              {
+                "description": "OLT17PROP02_NTA_1/2",
+                "identifier": null,
+                "name": "1/1/2"
+              },
+              {
+                "description": "OLT17PROP02_NTA_1/3",
+                "identifier": null,
+                "name": "1/2/3"
+              },
+              {
+                "description": "OLT17PROP02_NTA_1/4",
+                "identifier": null,
+                "name": "1/2/4"
+              }
+            ],
+            "sys_ip": "213.224.120.71"
+          },
+          {
+            "name": "CINMECHB01",
+            "ports": [
+              {
+                "description": "OLT17PROP02_NTB_1/1",
+                "identifier": null,
+                "name": "1/1/1"
+              },
+              {
+                "description": "OLT17PROP02_NTB_1/2",
+                "identifier": null,
+                "name": "1/1/2"
+              },
+              {
+                "description": "OLT17PROP02_NTB_1/3",
+                "identifier": null,
+                "name": "1/1/3"
+              },
+              {
+                "description": "OLT17PROP02_NTB_1/4",
+                "identifier": null,
+                "name": "1/1/4"
+              }
+            ],
+            "sys_ip": "213.224.120.72"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": null,
+        "system_id": null
+      },
+      "console_ports": [],
+      "data": {
+        "evpn_service_id": 24311,
+        "sap_egress_gi_pol_id": null,
+        "sap_ingress_gi_pol_id": null,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": null,
+      "dhcp_v6_ip2": null,
+      "fip": {
+        "evpn_service_id": 25396
+      },
+      "ftth_olt_id": "70e8d73c-6e6b-4c32-816e-e0e3631dbf85",
+      "gi_index": null,
+      "managed_by_inmanta": false,
+      "name": "OLT17PROP02",
+      "oam": {
+        "evpn_service_id": 24314,
+        "host_address": null,
+        "if_address1": null,
+        "if_address2": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "olt_environment": "PRD",
+      "qtag": null,
+      "region": "HOBO",
+      "tr069": {
+        "evpn_service_id": 24313,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "voice": {
+        "evpn_service_id": 24312,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 4,
+              "connection_profile_vlan_start": 100,
+              "name": "CINGENTA01"
+            },
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 2,
+              "connection_profile_vlan_start": 100,
+              "name": "CINGENTB01"
+            }
+          ],
+          "sap_ingress_pol_id": 30159
+        },
+        "skip_b2b_checks": true,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": null,
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": null,
+        "abuse_v6_filter_id": null,
+        "infra_v4_filter_id": null,
+        "infra_v6_filter_id": null,
+        "node_master": {
+          "lag_id_side_a": null,
+          "lag_id_side_b": null,
+          "name": "BNGASSE90",
+          "sys_ip": null
+        },
+        "node_slave": null,
+        "sap_egress_pxc_pol_id": null,
+        "sap_ingress_pxc_pol_id": null
+      },
+      "cin": {
+        "connection_type": null,
+        "esi": null,
+        "esi_name": null,
+        "lacp_admin_key": null,
+        "lag_id": null,
+        "nodes": [
+          {
+            "name": "CINGENTA01",
+            "ports": [
+              {
+                "description": "OLT17PROP24_NTA_1/1",
+                "identifier": null,
+                "name": "1/1/18"
+              },
+              {
+                "description": "OLT17PROP24_NTA_1/2",
+                "identifier": null,
+                "name": "1/1/19"
+              },
+              {
+                "description": "OLT17PROP24_NTA_1/3",
+                "identifier": null,
+                "name": "1/1/20"
+              },
+              {
+                "description": "OLT17PROP24_NTA_1/4",
+                "identifier": null,
+                "name": "1/1/21"
+              }
+            ],
+            "sys_ip": "213.224.120.1"
+          },
+          {
+            "name": "CINGENTB01",
+            "ports": [
+              {
+                "description": "OLT17PROP24_NTB_1/1",
+                "identifier": null,
+                "name": "1/1/18"
+              },
+              {
+                "description": "OLT17PROP24_NTB_1/2",
+                "identifier": null,
+                "name": "1/1/19"
+              },
+              {
+                "description": "OLT17PROP24_NTB_1/3",
+                "identifier": null,
+                "name": "1/1/20"
+              },
+              {
+                "description": "OLT17PROP24_NTB_1/4",
+                "identifier": null,
+                "name": "1/1/21"
+              }
+            ],
+            "sys_ip": "213.224.120.2"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": null,
+        "system_id": null
+      },
+      "console_ports": [],
+      "data": {
+        "evpn_service_id": null,
+        "sap_egress_gi_pol_id": null,
+        "sap_ingress_gi_pol_id": null,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": null,
+      "dhcp_v6_ip2": null,
+      "fip": {
+        "evpn_service_id": 25397
+      },
+      "ftth_olt_id": "7ce66e18-968d-48d6-9cca-a966719769bc",
+      "gi_index": null,
+      "managed_by_inmanta": false,
+      "name": "OLT17PROP24",
+      "oam": {
+        "evpn_service_id": null,
+        "host_address": null,
+        "if_address1": null,
+        "if_address2": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "olt_environment": "PRD",
+      "qtag": null,
+      "region": "HOBO",
+      "tr069": {
+        "evpn_service_id": 24992,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "voice": {
+        "evpn_service_id": null,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 1,
+              "connection_profile_vlan_start": 100,
+              "name": "CINAALSA01"
+            },
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 1,
+              "connection_profile_vlan_start": 100,
+              "name": "CINAALSB01"
+            }
+          ],
+          "sap_ingress_pol_id": 30159
+        },
+        "skip_b2b_checks": true,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": null,
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": 330,
+        "abuse_v6_filter_id": 340,
+        "infra_v4_filter_id": 337,
+        "infra_v6_filter_id": 338,
+        "node_master": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGASSE90",
+          "sys_ip": "213.224.245.169"
+        },
+        "node_slave": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGGENT90",
+          "sys_ip": "213.224.245.170"
+        },
+        "sap_egress_pxc_pol_id": 30151,
+        "sap_ingress_pxc_pol_id": 30150
+      },
+      "cin": {
+        "connection_type": "1x10G",
+        "esi": "00:00:00:00:00:0C:D1:00:00:00",
+        "esi_name": "FTTH_CINHOBO_OLT70AALS01",
+        "lacp_admin_key": 45,
+        "lag_id": 45,
+        "nodes": [
+          {
+            "name": "CINAALSA01",
+            "ports": [
+              {
+                "description": "OLT70AALS01_NTA_1/1",
+                "identifier": "77426",
+                "name": "1/1/43"
+              }
+            ],
+            "sys_ip": "213.224.120.9"
+          },
+          {
+            "name": "CINAALSB01",
+            "ports": [
+              {
+                "description": "OLT70AALS01_NTB_1/1",
+                "identifier": "77486",
+                "name": "1/1/43"
+              }
+            ],
+            "sys_ip": "213.224.120.10"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": 30158,
+        "system_id": "00:00:00:00:0C:D1"
+      },
+      "console_ports": [
+        "OLT70AALS01_NTA",
+        "OLT70AALS01_NTB"
+      ],
+      "data": {
+        "evpn_service_id": 25078,
+        "sap_egress_gi_pol_id": 30149,
+        "sap_ingress_gi_pol_id": 30148,
+        "vprn_service_id": 24649
+      },
+      "dhcp_v6_ip1": "2a02:1800:1e1:1::302:1",
+      "dhcp_v6_ip2": "2a02:1800:1e2:1::302:1",
+      "fip": {
+        "evpn_service_id": 25398
+      },
+      "ftth_olt_id": "e6a8c138-2fae-46fd-a9bc-a06194c5c9d2",
+      "gi_index": 1,
+      "managed_by_inmanta": false,
+      "name": "OLT70AALS01",
+      "oam": {
+        "evpn_service_id": 25079,
+        "host_address": "10.46.192.97",
+        "if_address1": "10.46.192.109/28",
+        "if_address2": "10.46.192.108/28",
+        "subnet": "10.46.192.96/28",
+        "vip_address": "10.46.192.110",
+        "vprn_service_id": 244
+      },
+      "olt_environment": "UAT",
+      "qtag": 2010,
+      "region": "HOBO",
+      "tr069": {
+        "evpn_service_id": 25080,
+        "if_address1": "2a02:181f:a:6::1/64",
+        "if_address2": "2a02:181f:a:6::2/64",
+        "link_address": "2a02:181f:a:6::",
+        "subnet": "2a02:181f:a:6::/64",
+        "vip_address": "2a02:181f:a:6::3/64",
+        "vprn_service_id": 24298
+      },
+      "voice": {
+        "evpn_service_id": 25081,
+        "if_address1": "2a02:181f:c:6::1/64",
+        "if_address2": "2a02:181f:c:6::2/64",
+        "link_address": "2a02:181f:c:6::",
+        "subnet": "2a02:181f:c:6::/64",
+        "vip_address": "2a02:181f:c:6::3/64",
+        "vprn_service_id": 773
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 1,
+              "connection_profile_vlan_start": 100,
+              "name": "CINWAREA01"
+            },
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 1,
+              "connection_profile_vlan_start": 100,
+              "name": "CINWAREB01"
+            }
+          ],
+          "sap_ingress_pol_id": 30159
+        },
+        "skip_b2b_checks": false,
+        "sr": {
+          "connection_profile_vlan_end": null,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": null,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": "SRWARE01",
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": 330,
+        "abuse_v6_filter_id": 340,
+        "infra_v4_filter_id": 337,
+        "infra_v6_filter_id": 338,
+        "node_master": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGGENT90",
+          "sys_ip": "213.224.245.170"
+        },
+        "node_slave": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGASSE90",
+          "sys_ip": "213.224.245.169"
+        },
+        "sap_egress_pxc_pol_id": 30151,
+        "sap_ingress_pxc_pol_id": 30150
+      },
+      "cin": {
+        "connection_type": "1x10G",
+        "esi": "00:00:00:00:00:0C:D2:00:00:00",
+        "esi_name": "FTTH_CINROES_OLT17WARE01",
+        "lacp_admin_key": 29,
+        "lag_id": 29,
+        "nodes": [
+          {
+            "name": "CINWAREA01",
+            "ports": [
+              {
+                "description": "OLT17WARE01_NTA_1/1",
+                "identifier": "82345",
+                "name": "1/1/29"
+              }
+            ],
+            "sys_ip": "213.224.120.23"
+          },
+          {
+            "name": "CINWAREB01",
+            "ports": [
+              {
+                "description": "OLT17WARE01_NTB_1/1",
+                "identifier": "82405",
+                "name": "1/1/29"
+              }
+            ],
+            "sys_ip": "213.224.120.24"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": 30158,
+        "system_id": "00:00:00:00:0C:D2"
+      },
+      "console_ports": [
+        "OLT17WARE01_NTA",
+        "OLT17WARE01_NTB"
+      ],
+      "data": {
+        "evpn_service_id": 25090,
+        "sap_egress_gi_pol_id": 30149,
+        "sap_ingress_gi_pol_id": 30148,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": "2a02:1800:1e1:1::302:1",
+      "dhcp_v6_ip2": "2a02:1800:1e2:1::302:1",
+      "fip": {
+        "evpn_service_id": 25399
+      },
+      "ftth_olt_id": "9f654b5c-61fc-4c72-968d-d6f48981849d",
+      "gi_index": 2,
+      "managed_by_inmanta": false,
+      "name": "OLT17WARE01",
+      "oam": {
+        "evpn_service_id": 25091,
+        "host_address": "10.46.192.113",
+        "if_address1": "10.46.192.125/28",
+        "if_address2": "10.46.192.124/28",
+        "subnet": "10.46.192.112/28",
+        "vip_address": "10.46.192.126",
+        "vprn_service_id": 244
+      },
+      "olt_environment": "UAT",
+      "qtag": 2011,
+      "region": "ROES",
+      "tr069": {
+        "evpn_service_id": 25092,
+        "if_address1": "2a02:181f:a:7::1/64",
+        "if_address2": "2a02:181f:a:7::2/64",
+        "link_address": "2a02:181f:a:7::",
+        "subnet": "2a02:181f:a:7::/64",
+        "vip_address": "2a02:181f:a:7::3/64",
+        "vprn_service_id": 24298
+      },
+      "voice": {
+        "evpn_service_id": 25093,
+        "if_address1": "2a02:181f:c:7::1/64",
+        "if_address2": "2a02:181f:c:7::2/64",
+        "link_address": "2a02:181f:c:7::",
+        "subnet": "2a02:181f:c:7::/64",
+        "vip_address": "2a02:181f:c:7::3/64",
+        "vprn_service_id": 773
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [],
+          "sap_ingress_pol_id": null
+        },
+        "skip_b2b_checks": true,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": null,
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": 330,
+        "abuse_v6_filter_id": 340,
+        "infra_v4_filter_id": 337,
+        "infra_v6_filter_id": 338,
+        "node_master": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGASSE90",
+          "sys_ip": "213.224.245.169"
+        },
+        "node_slave": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGGENT90",
+          "sys_ip": "213.224.245.170"
+        },
+        "sap_egress_pxc_pol_id": 30151,
+        "sap_ingress_pxc_pol_id": 30150
+      },
+      "cin": {
+        "connection_type": "4x10G",
+        "esi": "00:00:00:00:00:0C:D3:00:00:00",
+        "esi_name": "FTTH_CINHOBO_OLT01HERE01",
+        "lacp_admin_key": 42,
+        "lag_id": 42,
+        "nodes": [
+          {
+            "name": "CINHEREA01BO",
+            "ports": [
+              {
+                "description": "OLT01HERE01_NTA_1/1",
+                "identifier": "114144",
+                "name": "1/1/41"
+              },
+              {
+                "description": "OLT01HERE01_NTA_1/2",
+                "identifier": "114145",
+                "name": "1/1/42"
+              },
+              {
+                "description": "OLT01HERE01_NTA_1/3",
+                "identifier": "114146",
+                "name": "1/1/43"
+              },
+              {
+                "description": "OLT01HERE01_NTA_1/4",
+                "identifier": "114147",
+                "name": "1/1/44"
+              }
+            ],
+            "sys_ip": "213.224.120.55"
+          },
+          {
+            "name": "CINHEREB01",
+            "ports": [
+              {
+                "description": "OLT01HERE01_NTB_1/1",
+                "identifier": "114204",
+                "name": "1/1/41"
+              },
+              {
+                "description": "OLT01HERE01_NTB_1/2",
+                "identifier": "114205",
+                "name": "1/1/42"
+              },
+              {
+                "description": "OLT01HERE01_NTB_1/3",
+                "identifier": "114206",
+                "name": "1/1/43"
+              },
+              {
+                "description": "OLT01HERE01_NTB_1/4",
+                "identifier": "114207",
+                "name": "1/1/44"
+              }
+            ],
+            "sys_ip": "213.224.120.56"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": 30158,
+        "system_id": "00:00:00:00:0C:D3"
+      },
+      "console_ports": [
+        "OLT01HERE01_NTA",
+        "OLT01HERE01_NTB"
+      ],
+      "data": {
+        "evpn_service_id": 25095,
+        "sap_egress_gi_pol_id": 30149,
+        "sap_ingress_gi_pol_id": 30148,
+        "vprn_service_id": 24649
+      },
+      "dhcp_v6_ip1": "2a02:1800:1e1:1::302:1",
+      "dhcp_v6_ip2": "2a02:1800:1e2:1::302:1",
+      "fip": {
+        "evpn_service_id": 25400
+      },
+      "ftth_olt_id": "20ae7a7b-15a5-49aa-b5a8-a49c5ac429d7",
+      "gi_index": 1,
+      "managed_by_inmanta": false,
+      "name": "OLT01HERE01",
+      "oam": {
+        "evpn_service_id": 25096,
+        "host_address": "10.46.192.129",
+        "if_address1": "10.46.192.141/28",
+        "if_address2": "10.46.192.140/28",
+        "subnet": "10.46.192.128/28",
+        "vip_address": "10.46.192.142",
+        "vprn_service_id": 244
+      },
+      "olt_environment": "UAT",
+      "qtag": 2012,
+      "region": "HOBO",
+      "tr069": {
+        "evpn_service_id": 25097,
+        "if_address1": "2a02:181f:a:8::1/64",
+        "if_address2": "2a02:181f:a:8::2/64",
+        "link_address": "2a02:181f:a:8::",
+        "subnet": "2a02:181f:a:8::/64",
+        "vip_address": "2a02:181f:a:8::3/64",
+        "vprn_service_id": 24298
+      },
+      "voice": {
+        "evpn_service_id": 25098,
+        "if_address1": "2a02:181f:c:8::1/64",
+        "if_address2": "2a02:181f:c:8::2/64",
+        "link_address": "2a02:181f:c:8::",
+        "subnet": "2a02:181f:c:8::/64",
+        "vip_address": "2a02:181f:c:8::3/64",
+        "vprn_service_id": 773
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [],
+          "sap_ingress_pol_id": null
+        },
+        "skip_b2b_checks": false,
+        "sr": {
+          "connection_profile_vlan_end": null,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": null,
+          "lag_id_access": 10,
+          "lag_id_service": 11,
+          "mac_pxc": [],
+          "name": "SROUDE01",
+          "port_pxc": [],
+          "pxc_type": "port",
+          "sap_egress_pol_id": 30196,
+          "sap_ingress_pol_id": 30195,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": 25450
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": 330,
+        "abuse_v6_filter_id": 340,
+        "infra_v4_filter_id": 337,
+        "infra_v6_filter_id": 338,
+        "node_master": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGGENT90",
+          "sys_ip": "213.224.245.170"
+        },
+        "node_slave": null,
+        "sap_egress_pxc_pol_id": 30151,
+        "sap_ingress_pxc_pol_id": 30150
+      },
+      "cin": {
+        "connection_type": "1x10G",
+        "esi": "00:00:00:00:00:0C:D4:00:00:00",
+        "esi_name": "FTTH_CINROES_OLT14OUDE01",
+        "lacp_admin_key": 2,
+        "lag_id": 2,
+        "nodes": [
+          {
+            "name": "CINOUDEA01",
+            "ports": [],
+            "sys_ip": "213.224.120.25"
+          },
+          {
+            "name": "CINOUDEB01",
+            "ports": [],
+            "sys_ip": "213.224.120.26"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": 30158,
+        "system_id": "00:00:00:00:0C:D4"
+      },
+      "console_ports": [],
+      "data": {
+        "evpn_service_id": null,
+        "sap_egress_gi_pol_id": null,
+        "sap_ingress_gi_pol_id": null,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": "2a02:1800:1e1:1::302:1",
+      "dhcp_v6_ip2": "2a02:1800:1e2:1::302:1",
+      "fip": {
+        "evpn_service_id": 25401
+      },
+      "ftth_olt_id": "10456b99-182d-4292-99c9-ce08416af504",
+      "gi_index": null,
+      "managed_by_inmanta": true,
+      "name": "OLT14OUDE01",
+      "oam": {
+        "evpn_service_id": null,
+        "host_address": null,
+        "if_address1": null,
+        "if_address2": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "olt_environment": "UAT",
+      "qtag": 2013,
+      "region": "ROES",
+      "tr069": {
+        "evpn_service_id": null,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "voice": {
+        "evpn_service_id": null,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [],
+          "sap_ingress_pol_id": null
+        },
+        "skip_b2b_checks": false,
+        "sr": {
+          "connection_profile_vlan_end": null,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": null,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": null,
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": null,
+        "abuse_v6_filter_id": null,
+        "infra_v4_filter_id": null,
+        "infra_v6_filter_id": null,
+        "node_master": {
+          "lag_id_side_a": null,
+          "lag_id_side_b": null,
+          "name": "BNGASSE90",
+          "sys_ip": null
+        },
+        "node_slave": null,
+        "sap_egress_pxc_pol_id": null,
+        "sap_ingress_pxc_pol_id": null
+      },
+      "cin": {
+        "connection_type": "1x10G",
+        "esi": null,
+        "esi_name": null,
+        "lacp_admin_key": null,
+        "lag_id": null,
+        "nodes": [
+          {
+            "name": "CINLEUVA01",
+            "ports": [],
+            "sys_ip": "213.224.120.89"
+          },
+          {
+            "name": "CINLEUVB01",
+            "ports": [],
+            "sys_ip": "213.224.120.90"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": null,
+        "system_id": null
+      },
+      "console_ports": [],
+      "data": {
+        "evpn_service_id": null,
+        "sap_egress_gi_pol_id": null,
+        "sap_ingress_gi_pol_id": null,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": null,
+      "dhcp_v6_ip2": null,
+      "fip": {
+        "evpn_service_id": 25402
+      },
+      "ftth_olt_id": "4b0d3a82-a953-4b33-86e5-0dade980246a",
+      "gi_index": null,
+      "managed_by_inmanta": false,
+      "name": "OLT17LEUV01",
+      "oam": {
+        "evpn_service_id": null,
+        "host_address": null,
+        "if_address1": null,
+        "if_address2": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "olt_environment": "UAT",
+      "qtag": null,
+      "region": "GENT",
+      "tr069": {
+        "evpn_service_id": null,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "voice": {
+        "evpn_service_id": null,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [],
+          "sap_ingress_pol_id": null
+        },
+        "skip_b2b_checks": false,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": 1,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": 11,
+          "lag_id_service": 12,
+          "mac_pxc": [
+            {
+              "card_id": 1,
+              "loopback_id": 1,
+              "mac_bandwidth": 100,
+              "mac_id": 3,
+              "mda_id": 1,
+              "pxc_description": "PXC_B2B",
+              "pxc_id": 1
+            },
+            {
+              "card_id": 2,
+              "loopback_id": 1,
+              "mac_bandwidth": 100,
+              "mac_id": 3,
+              "mda_id": 1,
+              "pxc_description": "PXC_B2B",
+              "pxc_id": 2
+            }
+          ],
+          "name": "SRNIKL01",
+          "port_pxc": [],
+          "pxc_type": "mac",
+          "sap_egress_pol_id": 30196,
+          "sap_ingress_pol_id": 30195,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": 330,
+        "abuse_v6_filter_id": 340,
+        "infra_v4_filter_id": 337,
+        "infra_v6_filter_id": 338,
+        "node_master": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGASSE90",
+          "sys_ip": "213.224.245.169"
+        },
+        "node_slave": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGGENT90",
+          "sys_ip": "213.224.245.170"
+        },
+        "sap_egress_pxc_pol_id": 30151,
+        "sap_ingress_pxc_pol_id": 30150
+      },
+      "cin": {
+        "connection_type": "1x10G",
+        "esi": "00:00:00:00:00:0C:D5:00:00:00",
+        "esi_name": "FTTH_CINGENT_OLT70NIKL01",
+        "lacp_admin_key": 44,
+        "lag_id": 44,
+        "nodes": [
+          {
+            "name": "CINNIKLA01",
+            "ports": [
+              {
+                "description": "OLT70NIKL01_NTA_1/1",
+                "identifier": "77787",
+                "name": "1/1/44"
+              }
+            ],
+            "sys_ip": "213.224.120.5"
+          },
+          {
+            "name": "CINNIKLB01",
+            "ports": [
+              {
+                "description": "OLT70NIKL01_NTB_1/1",
+                "identifier": "77847",
+                "name": "1/1/44"
+              }
+            ],
+            "sys_ip": "213.224.120.6"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": 30158,
+        "system_id": "00:00:00:00:0C:D5"
+      },
+      "console_ports": [
+        "OLT70NIKL01_NTA",
+        "OLT70NIKL01_NTB"
+      ],
+      "data": {
+        "evpn_service_id": 25149,
+        "sap_egress_gi_pol_id": 30149,
+        "sap_ingress_gi_pol_id": 30148,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": "2a02:1800:110:1::302:1",
+      "dhcp_v6_ip2": "2a02:1800:120:1::302:1",
+      "fip": {
+        "evpn_service_id": 25403
+      },
+      "ftth_olt_id": "65b67a46-394b-4afc-a8cd-ede2a81ca3b6",
+      "gi_index": 2,
+      "managed_by_inmanta": true,
+      "name": "OLT70NIKL01",
+      "oam": {
+        "evpn_service_id": 25150,
+        "host_address": "10.46.192.145",
+        "if_address1": "10.46.192.157/28",
+        "if_address2": "10.46.192.156/28",
+        "subnet": "10.46.192.144/28",
+        "vip_address": "10.46.192.158",
+        "vprn_service_id": 244
+      },
+      "olt_environment": "PRD",
+      "qtag": 2014,
+      "region": "GENT",
+      "tr069": {
+        "evpn_service_id": 25151,
+        "if_address1": "2a02:181f:a:9::1/64",
+        "if_address2": "2a02:181f:a:9::2/64",
+        "link_address": "2a02:181f:a:9::",
+        "subnet": "2a02:181f:a:9::/64",
+        "vip_address": "2a02:181f:a:9::3/64",
+        "vprn_service_id": 24298
+      },
+      "voice": {
+        "evpn_service_id": 25152,
+        "if_address1": "2a02:181f:c:9::1/64",
+        "if_address2": "2a02:181f:c:9::2/64",
+        "link_address": "2a02:181f:c:9::",
+        "subnet": "2a02:181f:c:9::/64",
+        "vip_address": "2a02:181f:c:9::3/64",
+        "vprn_service_id": 773
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [],
+          "sap_ingress_pol_id": null
+        },
+        "skip_b2b_checks": true,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": null,
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": null,
+        "abuse_v6_filter_id": null,
+        "infra_v4_filter_id": null,
+        "infra_v6_filter_id": null,
+        "node_master": {
+          "lag_id_side_a": null,
+          "lag_id_side_b": null,
+          "name": "BNGGENT90",
+          "sys_ip": null
+        },
+        "node_slave": null,
+        "sap_egress_pxc_pol_id": null,
+        "sap_ingress_pxc_pol_id": null
+      },
+      "cin": {
+        "connection_type": "1x10G",
+        "esi": null,
+        "esi_name": null,
+        "lacp_admin_key": null,
+        "lag_id": null,
+        "nodes": [
+          {
+            "name": "CINSCHAA02",
+            "ports": [],
+            "sys_ip": "213.224.120.87"
+          },
+          {
+            "name": "CINSCHAB02",
+            "ports": [],
+            "sys_ip": "213.224.120.88"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": null,
+        "system_id": null
+      },
+      "console_ports": [],
+      "data": {
+        "evpn_service_id": null,
+        "sap_egress_gi_pol_id": null,
+        "sap_ingress_gi_pol_id": null,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": null,
+      "dhcp_v6_ip2": null,
+      "fip": {
+        "evpn_service_id": 25404
+      },
+      "ftth_olt_id": "aac3a7cd-b31f-4cf6-b258-b327ee280bfa",
+      "gi_index": null,
+      "managed_by_inmanta": false,
+      "name": "OLT65SCHA01",
+      "oam": {
+        "evpn_service_id": null,
+        "host_address": null,
+        "if_address1": null,
+        "if_address2": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "olt_environment": "UAT",
+      "qtag": null,
+      "region": "ASSE",
+      "tr069": {
+        "evpn_service_id": null,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "voice": {
+        "evpn_service_id": null,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 1,
+              "connection_profile_vlan_start": 100,
+              "name": "CINNIKLA01"
+            },
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 1,
+              "connection_profile_vlan_start": 100,
+              "name": "CINNIKLB01"
+            }
+          ],
+          "sap_ingress_pol_id": 30159
+        },
+        "skip_b2b_checks": false,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": 2,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": 11,
+          "lag_id_service": 12,
+          "mac_pxc": [
+            {
+              "card_id": 1,
+              "loopback_id": 1,
+              "mac_bandwidth": 100,
+              "mac_id": 3,
+              "mda_id": 1,
+              "pxc_description": "PXC_B2B",
+              "pxc_id": 1
+            },
+            {
+              "card_id": 2,
+              "loopback_id": 1,
+              "mac_bandwidth": 100,
+              "mac_id": 3,
+              "mda_id": 1,
+              "pxc_description": "PXC_B2B",
+              "pxc_id": 2
+            }
+          ],
+          "name": "SRNIKL01",
+          "port_pxc": [],
+          "pxc_type": "mac",
+          "sap_egress_pol_id": 30196,
+          "sap_ingress_pol_id": 30195,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": 330,
+        "abuse_v6_filter_id": 340,
+        "infra_v4_filter_id": 337,
+        "infra_v6_filter_id": 338,
+        "node_master": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGGENT90",
+          "sys_ip": "213.224.245.170"
+        },
+        "node_slave": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGASSE90",
+          "sys_ip": "213.224.245.169"
+        },
+        "sap_egress_pxc_pol_id": 30151,
+        "sap_ingress_pxc_pol_id": 30150
+      },
+      "cin": {
+        "connection_type": "4x10G",
+        "esi": "00:00:00:00:00:0C:D6:00:00:00",
+        "esi_name": "FTTH_CINGENT_OLT70NIKL99",
+        "lacp_admin_key": 45,
+        "lag_id": 45,
+        "nodes": [
+          {
+            "name": "CINNIKLA01",
+            "ports": [
+              {
+                "description": "OLT70NIKL99_NTA_1/1",
+                "identifier": "77787",
+                "name": "1/1/44"
+              },
+              {
+                "description": "OLT70NIKL99_NTA_1/2",
+                "identifier": "77788",
+                "name": "1/1/45"
+              },
+              {
+                "description": "OLT70NIKL99_NTA_1/3",
+                "identifier": "77789",
+                "name": "1/1/46"
+              },
+              {
+                "description": "OLT70NIKL99_NTA_1/4",
+                "identifier": "77790",
+                "name": "1/1/47"
+              }
+            ],
+            "sys_ip": "213.224.120.5"
+          },
+          {
+            "name": "CINNIKLB01",
+            "ports": [
+              {
+                "description": "OLT70NIKL99_NTB_1/1",
+                "identifier": "77847",
+                "name": "1/1/44"
+              },
+              {
+                "description": "OLT70NIKL99_NTB_1/2",
+                "identifier": "77848",
+                "name": "1/1/45"
+              },
+              {
+                "description": "OLT70NIKL99_NTB_1/3",
+                "identifier": "77849",
+                "name": "1/1/46"
+              },
+              {
+                "description": "OLT70NIKL99_NTB_1/4",
+                "identifier": "77850",
+                "name": "1/1/47"
+              }
+            ],
+            "sys_ip": "213.224.120.6"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": 30158,
+        "system_id": "00:00:00:00:0C:D6"
+      },
+      "console_ports": [
+        "OLT70NIKL99_NTA",
+        "OLT70NIKL99_NTB"
+      ],
+      "data": {
+        "evpn_service_id": 25322,
+        "sap_egress_gi_pol_id": 30149,
+        "sap_ingress_gi_pol_id": 30148,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": "2a02:1800:110:1::302:1",
+      "dhcp_v6_ip2": "2a02:1800:120:1::302:1",
+      "fip": {
+        "evpn_service_id": 25405
+      },
+      "ftth_olt_id": "5f4ce135-f828-46c5-8858-2a4fb80b6a20",
+      "gi_index": 1,
+      "managed_by_inmanta": true,
+      "name": "OLT70NIKL99",
+      "oam": {
+        "evpn_service_id": 25323,
+        "host_address": "10.46.192.161",
+        "if_address1": "10.46.192.173/28",
+        "if_address2": "10.46.192.172/28",
+        "subnet": "10.46.192.160/28",
+        "vip_address": "10.46.192.174",
+        "vprn_service_id": 244
+      },
+      "olt_environment": "PRD",
+      "qtag": 2015,
+      "region": "GENT",
+      "tr069": {
+        "evpn_service_id": 25326,
+        "if_address1": "2a02:181f:a:a::1/64",
+        "if_address2": "2a02:181f:a:a::2/64",
+        "link_address": "2a02:181f:a:a::",
+        "subnet": "2a02:181f:a:a::/64",
+        "vip_address": "2a02:181f:a:a::3/64",
+        "vprn_service_id": 24298
+      },
+      "voice": {
+        "evpn_service_id": 25327,
+        "if_address1": "2a02:181f:c:a::1/64",
+        "if_address2": "2a02:181f:c:a::2/64",
+        "link_address": "2a02:181f:c:a::",
+        "subnet": "2a02:181f:c:a::/64",
+        "vip_address": "2a02:181f:c:a::3/64",
+        "vprn_service_id": 773
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [],
+          "sap_ingress_pol_id": null
+        },
+        "skip_b2b_checks": false,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": 3,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": 11,
+          "lag_id_service": 12,
+          "mac_pxc": [
+            {
+              "card_id": 1,
+              "loopback_id": 1,
+              "mac_bandwidth": 100,
+              "mac_id": 3,
+              "mda_id": 1,
+              "pxc_description": "PXC_B2B",
+              "pxc_id": 1
+            },
+            {
+              "card_id": 2,
+              "loopback_id": 1,
+              "mac_bandwidth": 100,
+              "mac_id": 3,
+              "mda_id": 1,
+              "pxc_description": "PXC_B2B",
+              "pxc_id": 2
+            }
+          ],
+          "name": "SRNIKL01",
+          "port_pxc": [],
+          "pxc_type": "mac",
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": null,
+        "abuse_v6_filter_id": null,
+        "infra_v4_filter_id": null,
+        "infra_v6_filter_id": null,
+        "node_master": {
+          "lag_id_side_a": null,
+          "lag_id_side_b": null,
+          "name": "BNGGENT90",
+          "sys_ip": null
+        },
+        "node_slave": null,
+        "sap_egress_pxc_pol_id": null,
+        "sap_ingress_pxc_pol_id": null
+      },
+      "cin": {
+        "connection_type": "1x10G",
+        "esi": null,
+        "esi_name": null,
+        "lacp_admin_key": null,
+        "lag_id": null,
+        "nodes": [
+          {
+            "name": "CINNIKLA01",
+            "ports": [],
+            "sys_ip": "213.224.120.5"
+          },
+          {
+            "name": "CINNIKLB01",
+            "ports": [],
+            "sys_ip": "213.224.120.6"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": null,
+        "system_id": null
+      },
+      "console_ports": [],
+      "data": {
+        "evpn_service_id": 25333,
+        "sap_egress_gi_pol_id": null,
+        "sap_ingress_gi_pol_id": null,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": null,
+      "dhcp_v6_ip2": null,
+      "fip": {
+        "evpn_service_id": 25406
+      },
+      "ftth_olt_id": "011c8085-1c37-4081-a3e3-2b93f386a608",
+      "gi_index": null,
+      "managed_by_inmanta": true,
+      "name": "OLT70NIKL98",
+      "oam": {
+        "evpn_service_id": 25334,
+        "host_address": null,
+        "if_address1": null,
+        "if_address2": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "olt_environment": "PRD",
+      "qtag": null,
+      "region": "GENT",
+      "tr069": {
+        "evpn_service_id": 25335,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "voice": {
+        "evpn_service_id": 25336,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [],
+          "sap_ingress_pol_id": null
+        },
+        "skip_b2b_checks": true,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": null,
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": null,
+        "abuse_v6_filter_id": null,
+        "infra_v4_filter_id": null,
+        "infra_v6_filter_id": null,
+        "node_master": {
+          "lag_id_side_a": null,
+          "lag_id_side_b": null,
+          "name": "BNGASSE90",
+          "sys_ip": null
+        },
+        "node_slave": null,
+        "sap_egress_pxc_pol_id": null,
+        "sap_ingress_pxc_pol_id": null
+      },
+      "cin": {
+        "connection_type": "1x10G",
+        "esi": null,
+        "esi_name": null,
+        "lacp_admin_key": null,
+        "lag_id": null,
+        "nodes": [
+          {
+            "name": "CINLEUVA01",
+            "ports": [],
+            "sys_ip": "213.224.120.89"
+          },
+          {
+            "name": "CINLEUVB01",
+            "ports": [],
+            "sys_ip": "213.224.120.90"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": null,
+        "system_id": null
+      },
+      "console_ports": [],
+      "data": {
+        "evpn_service_id": null,
+        "sap_egress_gi_pol_id": null,
+        "sap_ingress_gi_pol_id": null,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": null,
+      "dhcp_v6_ip2": null,
+      "fip": {
+        "evpn_service_id": 25407
+      },
+      "ftth_olt_id": "4df1c3d4-e2a4-4160-bcec-c1af55e9cf2d",
+      "gi_index": null,
+      "managed_by_inmanta": true,
+      "name": "OLT17LEUV02",
+      "oam": {
+        "evpn_service_id": null,
+        "host_address": null,
+        "if_address1": null,
+        "if_address2": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "olt_environment": "PRD",
+      "qtag": null,
+      "region": "ASSE",
+      "tr069": {
+        "evpn_service_id": null,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "voice": {
+        "evpn_service_id": 25345,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [],
+          "sap_ingress_pol_id": null
+        },
+        "skip_b2b_checks": false,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": 3,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [
+            {
+              "card_id": 1,
+              "loopback_id": 2,
+              "mac_bandwidth": 100,
+              "mac_id": 3,
+              "mda_id": 1,
+              "pxc_description": "PXC_B2B",
+              "pxc_id": 3
+            },
+            {
+              "card_id": 2,
+              "loopback_id": 2,
+              "mac_bandwidth": 100,
+              "mac_id": 3,
+              "mda_id": 1,
+              "pxc_description": "PXC_B2B",
+              "pxc_id": 4
+            }
+          ],
+          "name": "SRMECH01",
+          "port_pxc": [],
+          "pxc_type": "mac",
+          "sap_egress_pol_id": null,
+          "sap_ingress_pol_id": null,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": null,
+        "abuse_v6_filter_id": null,
+        "infra_v4_filter_id": null,
+        "infra_v6_filter_id": null,
+        "node_master": {
+          "lag_id_side_a": null,
+          "lag_id_side_b": null,
+          "name": "BNGGENT90",
+          "sys_ip": null
+        },
+        "node_slave": null,
+        "sap_egress_pxc_pol_id": null,
+        "sap_ingress_pxc_pol_id": null
+      },
+      "cin": {
+        "connection_type": "1x10G",
+        "esi": null,
+        "esi_name": null,
+        "lacp_admin_key": null,
+        "lag_id": null,
+        "nodes": [
+          {
+            "name": "CINMECHA01",
+            "ports": [],
+            "sys_ip": "213.224.120.71"
+          },
+          {
+            "name": "CINMECHB01",
+            "ports": [],
+            "sys_ip": "213.224.120.72"
+          }
+        ],
+        "sap_ingress_ixr_pol_id": null,
+        "system_id": null
+      },
+      "console_ports": [],
+      "data": {
+        "evpn_service_id": null,
+        "sap_egress_gi_pol_id": null,
+        "sap_ingress_gi_pol_id": null,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": "2a02:1800:110:1::302:1",
+      "dhcp_v6_ip2": "2a02:1800:120:1::302:1",
+      "fip": {
+        "evpn_service_id": 25408
+      },
+      "ftth_olt_id": "18efb40e-12c7-4152-b1bb-95e84501fdd2",
+      "gi_index": 2,
+      "managed_by_inmanta": true,
+      "name": "OLT17MECH04",
+      "oam": {
+        "evpn_service_id": null,
+        "host_address": null,
+        "if_address1": null,
+        "if_address2": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "olt_environment": "PRD",
+      "qtag": 2017,
+      "region": "HOBO",
+      "tr069": {
+        "evpn_service_id": null,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      },
+      "voice": {
+        "evpn_service_id": null,
+        "if_address1": null,
+        "if_address2": null,
+        "link_address": null,
+        "subnet": null,
+        "vip_address": null,
+        "vprn_service_id": null
+      }
+    },
+    {
+      "b2b": {
+        "cin": {
+          "nodes": [
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 1,
+              "connection_profile_vlan_start": 100,
+              "name": "HCINDENDA01"
+            },
+            {
+              "connection_profile_vlan_end": 999,
+              "connection_profile_vlan_id": 1,
+              "connection_profile_vlan_start": 100,
+              "name": "HCINDENDB01"
+            }
+          ],
+          "sap_ingress_pol_id": 30159
+        },
+        "skip_b2b_checks": true,
+        "sr": {
+          "connection_profile_vlan_end": 999,
+          "connection_profile_vlan_id": null,
+          "connection_profile_vlan_start": 100,
+          "lag_id_access": null,
+          "lag_id_service": null,
+          "mac_pxc": [],
+          "name": null,
+          "port_pxc": [],
+          "pxc_type": null,
+          "sap_egress_pol_id": 30196,
+          "sap_ingress_pol_id": 30195,
+          "services": {
+            "transport_service": {
+              "epipe_service_id": null
+            }
+          }
+        }
+      },
+      "bng": {
+        "abuse_v4_filter_id": 330,
+        "abuse_v6_filter_id": 340,
+        "infra_v4_filter_id": 337,
+        "infra_v6_filter_id": 338,
+        "node_master": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGGENT90",
+          "sys_ip": "213.224.245.170"
+        },
+        "node_slave": {
+          "lag_id_side_a": 99,
+          "lag_id_side_b": 98,
+          "name": "BNGASSE90",
+          "sys_ip": "213.224.245.169"
+        },
+        "sap_egress_pxc_pol_id": 30151,
+        "sap_ingress_pxc_pol_id": 30150
+      },
+      "cin": {
+        "connection_type": "1x100G",
+        "esi": "00:00:00:00:00:0C:D7:00:00:00",
+        "esi_name": "FTTH_CINGENT_OLT70DEND99",
+        "lacp_admin_key": 1,
+        "lag_id": 1,
+        "nodes": [
+          {
+            "name": "HCINDENDA01",
+            "ports": [
+              {
+                "description": "OLT70DEND99_NTA_1/1",
+                "identifier": "",
+                "name": "1/1/c5/1"
+              }
+            ],
+            "sys_ip": null
+          },
+          {
+            "name": "HCINDENDB01",
+            "ports": [
+              {
+                "description": "OLT70DEND99_NTB_1/1",
+                "identifier": "",
+                "name": "1/1/c5/1"
+              }
+            ],
+            "sys_ip": null
+          }
+        ],
+        "sap_ingress_ixr_pol_id": 30158,
+        "system_id": "00:00:00:00:0C:D7"
+      },
+      "console_ports": [
+        "OLT70DEND99_NTA",
+        "OLT70DEND99_NTB"
+      ],
+      "data": {
+        "evpn_service_id": 25538,
+        "sap_egress_gi_pol_id": 30149,
+        "sap_ingress_gi_pol_id": 30148,
+        "vprn_service_id": null
+      },
+      "dhcp_v6_ip1": "2a02:1800:110:1::302:1",
+      "dhcp_v6_ip2": "2a02:1800:120:1::302:1",
+      "fip": {
+        "evpn_service_id": 25539
+      },
+      "ftth_olt_id": "014c0dab-6503-4971-8ffc-06205a81808c",
+      "gi_index": 1,
+      "managed_by_inmanta": true,
+      "name": "OLT70DEND99",
+      "oam": {
+        "evpn_service_id": 25540,
+        "host_address": "10.46.192.177",
+        "if_address1": "10.46.192.189/28",
+        "if_address2": "10.46.192.188/28",
+        "subnet": "10.46.192.176/28",
+        "vip_address": "10.46.192.190",
+        "vprn_service_id": 244
+      },
+      "olt_environment": "PRD",
+      "qtag": 2016,
+      "region": "GENT",
+      "tr069": {
+        "evpn_service_id": 25541,
+        "if_address1": "2a02:181f:a:b::1/64",
+        "if_address2": "2a02:181f:a:b::2/64",
+        "link_address": "2a02:181f:a:b::",
+        "subnet": "2a02:181f:a:b::/64",
+        "vip_address": "2a02:181f:a:b::3/64",
+        "vprn_service_id": 24298
+      },
+      "voice": {
+        "evpn_service_id": 25542,
+        "if_address1": "2a02:181f:c:b::1/64",
+        "if_address2": "2a02:181f:c:b::2/64",
+        "link_address": "2a02:181f:c:b::",
+        "subnet": "2a02:181f:c:b::/64",
+        "vip_address": "2a02:181f:c:b::3/64",
+        "vprn_service_id": 773
+      }
+    }
+  ],
+  "meta": {
+    "object_count": 16,
+    "query_duration": "0:00:00.024611"
+  }
+}

@@ -1,0 +1,298 @@
+{
+  "data": [
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRMELL01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRMELL01",
+      "pxc_id": 2
+    },
+    {
+      "description": "FTTH FastTrack strap PXC",
+      "device_name": "SBHOBO01",
+      "pxc_id": 1
+    },
+    {
+      "description": "FTTH FastTrack strap PXC",
+      "device_name": "SBHOBO01",
+      "pxc_id": 2
+    },
+    {
+      "description": "HEGW migration strap PXC",
+      "device_name": "SBNOCM04",
+      "pxc_id": 1
+    },
+    {
+      "description": "All-purpose PXC strap",
+      "device_name": "SBNOCM03",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRBRUG01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRBRUG01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRSCHA01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRSCHA01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRROEH01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRROEH01",
+      "pxc_id": 2
+    },
+    {
+      "description": "",
+      "device_name": "SRIEPE01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRHOBH01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRHOBH01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRWARE01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRWARE01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRINTX01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRINTX01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRMECH01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRMECH01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SROVER01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SROVER01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRKEIB01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRKEIB01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRLEUV01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRLEUV01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-1",
+      "device_name": "SBAART01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-1",
+      "device_name": "SBGENB01",
+      "pxc_id": 1
+    },
+    {
+      "description": "HEGW migration strap PXC",
+      "device_name": "SRPGUL01",
+      "pxc_id": 1
+    },
+    {
+      "description": "HEGW migration strap PXC",
+      "device_name": "SRPGUL01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRKORT01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRKORT01",
+      "pxc_id": 2
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SRLEUV01",
+      "pxc_id": 3
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SRLEUV01",
+      "pxc_id": 4
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SRMECH01",
+      "pxc_id": 3
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SRMECH01",
+      "pxc_id": 4
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SROUDE01",
+      "pxc_id": 1
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SROUDE01",
+      "pxc_id": 2
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SRWARE01",
+      "pxc_id": 3
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SRWARE01",
+      "pxc_id": 4
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SRNIKL01",
+      "pxc_id": 1
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SRNIKL01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-1 for vCCAP Multicast",
+      "device_name": "SRSROES01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-1 for vCCAP Multicast",
+      "device_name": "SRSGENT01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRSCHO01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRSCHO01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRGENH01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRGENH01",
+      "pxc_id": 2
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SRGENH01",
+      "pxc_id": 3
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SRGENH01",
+      "pxc_id": 4
+    },
+    {
+      "description": "pxc-1 for vCCAP Multicast",
+      "device_name": "SRSGENT02",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-1 for vCCAP Multicast",
+      "device_name": "SRSROES02",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-1 for vCCAP Multicast",
+      "device_name": "SRSNOCM01",
+      "pxc_id": 1
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SREEKL01",
+      "pxc_id": 1
+    },
+    {
+      "description": "PXC_B2B",
+      "device_name": "SREEKL01",
+      "pxc_id": 2
+    },
+    {
+      "description": "pxc-port-1",
+      "device_name": "SRBSEL01",
+      "pxc_id": 1
+    },
+    {
+      "description": "pxc-port-2",
+      "device_name": "SRBSEL01",
+      "pxc_id": 2
+    }
+  ],
+  "meta": {
+    "object_count": 58,
+    "query_duration": "0:00:00.012753"
+  }
+}

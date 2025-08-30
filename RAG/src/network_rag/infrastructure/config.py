@@ -11,7 +11,7 @@ from ..models import ConfigurationError
 @dataclass
 class DatabaseConfig:
     """Database configuration"""
-    connection_string: str
+    connection_string: str = "mongodb://localhost:27017/network_rag"
     database_name: str = "network_rag"
     max_connections: int = 100
     connection_timeout: int = 30
@@ -20,8 +20,8 @@ class DatabaseConfig:
 @dataclass 
 class NetworkAPIConfig:
     """Network API configuration"""
-    base_url: str
-    api_key: str
+    base_url: str = "http://localhost:3000/api"
+    api_key: str = ""
     timeout: int = 30
     max_retries: int = 3
     rate_limit_per_minute: int = 100
@@ -71,19 +71,20 @@ class LoggingConfig:
 @dataclass
 class SystemConfig:
     """Overall system configuration"""
-    environment: str = "development"
-    debug: bool = False
-    data_dir: str = "./data"
-    cache_dir: str = "./cache"
-    log_dir: str = "./logs"
-    
-    # Component configurations
+    # Component configurations (no defaults - must come first)
     database: DatabaseConfig
     network_api: NetworkAPIConfig
     llm: LLMConfig
     embedding: EmbeddingConfig
     mcp: MCPConfig
     logging: LoggingConfig
+    
+    # Basic system config (with defaults - must come after)
+    environment: str = "development"
+    debug: bool = False
+    data_dir: str = "./data"
+    cache_dir: str = "./cache"
+    log_dir: str = "./logs"
 
 
 class ConfigManager:
@@ -140,13 +141,15 @@ class ConfigManager:
                 "connection_timeout": int(os.getenv("DB_CONNECTION_TIMEOUT", "30"))
             },
             
-            # Network API configuration
+            # Network API configuration - COMMENTED OUT (using local JSON files)
             "network_api": {
-                "base_url": os.getenv("NETWORK_API_URL", "http://localhost:3000/api"),
-                "api_key": os.getenv("NETWORK_API_KEY", ""),
-                "timeout": int(os.getenv("NETWORK_API_TIMEOUT", "30")),
+                # "base_url": os.getenv("NETWORK_API_URL", "http://normapi-devel.prd.inet.telenet.be:8123/service/resource/v2"),
+                # "api_key": os.getenv("NETWORK_API_KEY", "cf712662-0816-11e4-8730-0050568546d8"),
+                "base_url": "file://local",
+                "api_key": "local_files",
+                "timeout": int(os.getenv("NETWORK_API_TIMEOUT", "60")),
                 "max_retries": int(os.getenv("NETWORK_API_MAX_RETRIES", "3")),
-                "rate_limit_per_minute": int(os.getenv("NETWORK_API_RATE_LIMIT", "100"))
+                "rate_limit_per_minute": int(os.getenv("NETWORK_API_RATE_LIMIT", "30"))
             },
             
             # LLM configuration
@@ -265,8 +268,9 @@ class ConfigManager:
         if not config.network_api.base_url:
             errors.append("Network API base URL is required")
         
-        if not config.network_api.api_key:
-            errors.append("Network API key is required")
+        # Only require API key in production environment
+        if config.environment == "production" and not config.network_api.api_key:
+            errors.append("Network API key is required in production")
         
         # LLM validation
         if not config.llm.base_url:

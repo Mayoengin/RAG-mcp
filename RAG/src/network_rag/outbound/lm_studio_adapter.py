@@ -705,8 +705,10 @@ Improved text:"""
         
         # Convert messages
         for msg in messages:
+            # msg.role is already a string due to use_enum_values = True in Message model
+            role_str = msg.role if isinstance(msg.role, str) else msg.role.value
             openai_messages.append({
-                "role": msg.role.value,
+                "role": role_str,
                 "content": msg.content
             })
         

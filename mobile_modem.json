@@ -1,0 +1,29 @@
+{
+  "data": [
+    {
+      "fnt_command_id": null,
+      "hardware_type": "Nokia 5G26-A",
+      "mobile_modem_id": "32123e74-0981-41be-ac1d-ce606efc5bc1",
+      "mobile_subscriber_id": "MOBILE-SUB-VPN-0100",
+      "serial_number": "LPL2408001DF"
+    },
+    {
+      "fnt_command_id": null,
+      "hardware_type": "Nokia 5G26-A",
+      "mobile_modem_id": "ea6bb460-dd7a-47e5-a6d2-ae0af02cc018",
+      "mobile_subscriber_id": "MOBILE-SUB-VPN-0277",
+      "serial_number": "LPL24080006F"
+    },
+    {
+      "fnt_command_id": null,
+      "hardware_type": "Nokia 5G26-A",
+      "mobile_modem_id": "b61bb2e6-a60f-41d5-875a-fd49e5f5731a",
+      "mobile_subscriber_id": "MOBILE-SUB-VPN-0100",
+      "serial_number": "LPL2408001DS"
+    }
+  ],
+  "meta": {
+    "object_count": 3,
+    "query_duration": "0:00:00.008591"
+  }
+}

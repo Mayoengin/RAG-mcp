@@ -396,7 +396,11 @@ When provided with network data, analyze it for:
 - Potential issues and recommendations
 - Operational priorities and next steps"""
         
-        messages.append(Message(role=MessageRole.SYSTEM, content=system_content))
+        messages.append(Message(
+            id=f"system_{int(datetime.utcnow().timestamp())}_{hash(system_content[:50]) % 10000}",
+            role=MessageRole.SYSTEM,
+            content=system_content
+        ))
         
         # Business Rule: Add conversation context intelligently
         if conversation_id and "conversation_intelligence" in result.supporting_data:
@@ -408,7 +412,11 @@ When provided with network data, analyze it for:
                     role_icon = "👤" if ctx["role"] == "user" else "🤖"
                     context_summary += f"{role_icon} {ctx['content_summary']}\n"
                 
-                messages.append(Message(role=MessageRole.SYSTEM, content=context_summary))
+                messages.append(Message(
+                    id=f"context_{int(datetime.utcnow().timestamp())}_{hash(context_summary[:50]) % 10000}",
+                    role=MessageRole.SYSTEM,
+                    content=context_summary
+                ))
         
         # Business Rule: Structure intelligence for optimal LLM processing
         context_parts = ["CURRENT QUERY:", f"'{query}'", ""]
@@ -454,7 +462,11 @@ When provided with network data, analyze it for:
         
         # Build final user message
         user_content = "\n".join(context_parts)
-        messages.append(Message(role=MessageRole.USER, content=user_content))
+        messages.append(Message(
+            id=f"user_{int(datetime.utcnow().timestamp())}_{hash(user_content[:50]) % 10000}",
+            role=MessageRole.USER,
+            content=user_content
+        ))
         
         return messages
     
