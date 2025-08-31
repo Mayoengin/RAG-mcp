@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "network-rag": {
+      "command": "python3",
+      "args": ["/Users/mayo.eid/Desktop/RAG/RAG/mcp_server_runner.py"],
+      "env": {},
+      "description": "Network RAG System with intelligent device analysis using RAG+LLM fusion"
+    }
+  }
+}

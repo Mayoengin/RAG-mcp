@@ -4,7 +4,6 @@
 # Core domain models
 from .ftth_olt_resource import FTTHOLTResource, Environment, ConnectionType
 from .document import Document, DocumentType
-from .query_result import QueryResult, ResultSource, SourceType, ConfidenceLevel
 
 # Exceptions
 from .exceptions import (
@@ -38,10 +37,6 @@ __all__ = [
     "ConnectionType",
     "Document",
     "DocumentType", 
-    "QueryResult",
-    "ResultSource",
-    "SourceType",
-    "ConfidenceLevel",
     
     # Exceptions
     "NetworkRAGException",

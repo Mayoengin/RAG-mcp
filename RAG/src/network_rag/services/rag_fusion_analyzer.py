@@ -1,17 +1,15 @@
 # src/network_rag/services/rag_fusion_analyzer.py
-"""RAG Fusion analysis service for intelligent tool selection with data awareness"""
+"""RAG Fusion analysis service for intelligent tool selection"""
 
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 from ..controller.document_controller import DocumentController
-from .schema_aware_context import SchemaAwareContextBuilder, SchemaAwareContext
 
 
 class RAGFusionAnalyzer:
-    """Handles RAG fusion search and tool recommendation logic with data awareness"""
+    """Handles RAG fusion search and tool recommendation logic"""
     
-    def __init__(self, document_controller: DocumentController, context_builder: SchemaAwareContextBuilder = None):
+    def __init__(self, document_controller: DocumentController):
         self.document_controller = document_controller
-        self.context_builder = context_builder
     
     async def analyze_query_for_tool_selection(self, query: str) -> Dict[str, Any]:
         """Main entry point for RAG fusion analysis"""
@@ -28,29 +26,6 @@ class RAGFusionAnalyzer:
         except Exception as e:
             print(f"RAG fusion analysis failed: {e}")
             return self._fallback_guidance(query)
-    
-    async def analyze_query_with_data_awareness(self, query: str) -> Tuple[Dict[str, Any], SchemaAwareContext]:
-        """Enhanced analysis with data awareness and schema context"""
-        
-        try:
-            # Step 1: Standard RAG fusion analysis
-            guidance = await self.analyze_query_for_tool_selection(query)
-            
-            # Step 2: Build schema-aware context if context builder available
-            if self.context_builder:
-                schema_context = await self.context_builder.build_context_for_query(query)
-                
-                # Step 3: Enhance guidance with data awareness
-                guidance = await self._enhance_guidance_with_data_context(guidance, schema_context)
-                
-                return guidance, schema_context
-            else:
-                # No context builder available, return basic guidance
-                return guidance, None
-                
-        except Exception as e:
-            print(f"Data-aware RAG fusion analysis failed: {e}")
-            return self._fallback_guidance(query), None
     
     async def _perform_fusion_search(self, query: str) -> List[Any]:
         """Perform multiple search strategies and combine results"""
@@ -237,121 +212,6 @@ class RAGFusionAnalyzer:
                     cleaned = line.strip()
                     if cleaned and cleaned not in recommendations:
                         recommendations.append(cleaned)
-    
-    async def _enhance_guidance_with_data_context(
-        self, 
-        guidance: Dict[str, Any], 
-        schema_context: SchemaAwareContext
-    ) -> Dict[str, Any]:
-        """Enhance RAG guidance with data quality and schema awareness"""
-        
-        # Start with original guidance
-        enhanced_guidance = guidance.copy()
-        
-        # Add data awareness indicators
-        enhanced_guidance['data_aware'] = True
-        enhanced_guidance['data_context_available'] = True
-        
-        # Adjust confidence based on data quality
-        original_confidence = guidance.get('confidence', 'LOW')
-        data_health = self._assess_data_health_for_query(schema_context)
-        
-        # Upgrade confidence if data is high quality
-        if data_health == 'excellent' and original_confidence != 'HIGH':
-            if original_confidence == 'MEDIUM':
-                enhanced_guidance['confidence'] = 'HIGH'
-            elif original_confidence == 'LOW':
-                enhanced_guidance['confidence'] = 'MEDIUM'
-        
-        # Downgrade confidence if data has issues
-        elif data_health in ['poor', 'fair'] and original_confidence == 'HIGH':
-            enhanced_guidance['confidence'] = 'MEDIUM'
-            enhanced_guidance['data_quality_warning'] = True
-        
-        # Adjust tool recommendations based on data availability
-        recommended_tool = guidance.get('tool_recommendation')
-        if recommended_tool:
-            enhanced_tool = self._adjust_tool_for_data_context(recommended_tool, schema_context)
-            if enhanced_tool != recommended_tool:
-                enhanced_guidance['tool_recommendation'] = enhanced_tool
-                enhanced_guidance['tool_adjusted_reason'] = f"Adjusted from {recommended_tool} due to data context"
-        
-        # Add data-specific recommendations
-        data_recommendations = self._generate_data_aware_recommendations(schema_context)
-        existing_recs = enhanced_guidance.get('recommendations', [])
-        enhanced_guidance['recommendations'] = existing_recs + data_recommendations
-        
-        # Add schema context summary
-        enhanced_guidance['available_schemas'] = [schema.name for schema in schema_context.relevant_schemas]
-        enhanced_guidance['data_quality_summary'] = "Basic schema validation available"
-        enhanced_guidance['total_records_available'] = sum(
-            sample.get('total_count', 0) for sample in schema_context.data_samples.values()
-        )
-        
-        return enhanced_guidance
-    
-    def _assess_data_health_for_query(self, schema_context: SchemaAwareContext) -> str:
-        """Assess overall data health relevant to the query (simplified)"""
-        
-        # Simplified assessment based on data availability
-        if not schema_context.data_samples:
-            return 'poor'
-        
-        # Basic health assessment based on data samples
-        total_records = sum(
-            sample.get('total_count', 0) for sample in schema_context.data_samples.values()
-        )
-        
-        if total_records > 5:
-            return 'good'
-        elif total_records > 0:
-            return 'fair'
-        else:
-            return 'poor'
-    
-    def _adjust_tool_for_data_context(self, tool: str, schema_context: SchemaAwareContext) -> str:
-        """Adjust tool recommendation based on data context (simplified)"""
-        
-        # If no data available, switch to knowledge search
-        empty_schemas = [
-            name for name, sample in schema_context.data_samples.items()
-            if sample.get('total_count', 0) == 0
-        ]
-        
-        if len(empty_schemas) == len(schema_context.data_samples):
-            # All data sources empty, use knowledge base instead
-            return 'search_knowledge_base'
-        
-        return tool  # No adjustment needed
-    
-    def _generate_data_aware_recommendations(self, schema_context: SchemaAwareContext) -> List[str]:
-        """Generate recommendations based on data context (simplified)"""
-        
-        recommendations = []
-        
-        # Basic data availability recommendations
-        if schema_context.data_samples:
-            total_records = sum(
-                sample.get('total_count', 0) for sample in schema_context.data_samples.values()
-            )
-            
-            if total_records > 0:
-                recommendations.append("Data samples available for analysis.")
-            else:
-                recommendations.append("Limited data available. Consider checking data sources.")
-            
-            # Large dataset recommendations
-            large_datasets = [
-                name for name, sample in schema_context.data_samples.items()
-                if sample.get('total_count', 0) > 100
-            ]
-            
-            if large_datasets:
-                recommendations.append(f"Large datasets detected in {', '.join(large_datasets)}. Use filters for better performance.")
-        else:
-            recommendations.append("No data samples available. Verify data source connectivity.")
-        
-        return recommendations[:2]  # Limit to top 2 recommendations
     
     def _calculate_confidence(self, score: int) -> str:
         """Calculate confidence level based on score"""

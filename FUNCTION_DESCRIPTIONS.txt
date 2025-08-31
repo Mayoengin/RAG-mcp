@@ -1,0 +1,590 @@
+NETWORK RAG SYSTEM - COMPLETE FUNCTION DESCRIPTIONS
+====================================================
+
+Query Example: "Show me FTTH OLTs in HOBO region"
+
+====================================================
+1. DEMO ENTRY POINT
+====================================================
+
+File: /RAG/main.py
+Function: async def main()
+Description: Main application entry point that initializes the demo system
+Parameters: None
+Returns: None
+Purpose: Sets up the NetworkRAGDemo, initializes all components, and handles user interaction
+Key Operations:
+- Creates NetworkRAGDemo instance
+- Calls demo.initialize(use_mock_data=False)
+- Shows system overview
+- Handles user input for demo modes
+- Graceful shutdown handling
+
+Function: NetworkRAGDemo.run_single_demo_scenario()
+Description: Executes a single demo scenario for non-interactive environments
+Parameters: None
+Returns: None
+Purpose: Runs a predefined demo query to showcase system capabilities
+Key Operations:
+- Sets up scenario: "Show me all the FTTH OLTs in GENT region"
+- Calls demo.server._execute_network_query() with demo arguments
+- Displays formatted results
+- Handles errors with traceback
+
+====================================================
+2. MCP SERVER ADAPTER
+====================================================
+
+File: /src/network_rag/inbound/mcp_server.py
+Class: MCPServerAdapter
+Function: async def _execute_network_query(self, arguments: Dict[str, Any]) -> str
+Description: Main entry point for network queries through MCP protocol
+Parameters:
+- arguments: Dict containing 'query' and 'include_recommendations'
+Returns: String - formatted response
+Purpose: Bridge between MCP protocol and internal query processing
+Key Operations:
+- Extracts query string from arguments
+- Validates query is not empty
+- Delegates to query_controller.execute_intelligent_network_query()
+- Handles exceptions with error formatting
+
+====================================================
+3. QUERY CONTROLLER (Main Orchestrator)
+====================================================
+
+File: /src/network_rag/controller/query_controller.py
+Class: QueryController
+Function: async def execute_intelligent_network_query(self, arguments: Dict[str, Any]) -> str
+Description: Main orchestrator for intelligent network query processing with RAG enhancement
+Parameters:
+- arguments: Dict with 'query' and 'include_recommendations'
+Returns: String - complete formatted response with analysis and recommendations
+Purpose: Coordinates all system components to provide intelligent network analysis
+Key Operations:
+1. RAG fusion analysis via self.rag_analyzer.analyze_query_with_data_awareness()
+2. Schema context formatting via self._format_schema_context_summary()
+3. Strategy execution based on analysis_type (device_listing/device_details/complex_analysis)
+4. Response assembly with recommendations
+5. Error handling with fallback responses
+
+Function: async def _execute_device_listing_strategy(self, query: str, guidance: Dict[str, Any], schema_context=None) -> str
+Description: Wrapper for device listing strategy execution
+Parameters:
+- query: Original user query
+- guidance: RAG analysis results
+- schema_context: Schema-aware context (optional)
+Returns: String - device listing analysis
+Purpose: Routes to original device listing implementation
+Key Operations:
+- Calls _execute_original_device_listing_strategy()
+
+Function: async def _execute_original_device_listing_strategy(self, query: str, guidance: Dict[str, Any]) -> str
+Description: Core device listing logic with LLM intelligence
+Parameters:
+- query: User query string
+- guidance: Tool selection guidance from RAG analysis
+Returns: String - intelligent device listing analysis
+Purpose: Retrieve, analyze, and intelligently present network device information
+Key Operations:
+1. Region extraction via _extract_region_from_query()
+2. Device fetching via self.network_port.fetch_ftth_olts(filters)
+3. Health summary compilation for each device
+4. LLM prompt construction with system and user context
+5. LLM response generation via self.llm_port.generate_response()
+6. Error handling with formatted error responses
+
+Function: def _extract_region_from_query(self, query: str) -> Optional[str]
+Description: Extracts region filter from user query using keyword matching
+Parameters:
+- query: User query string
+Returns: Optional[str] - uppercase region name or None
+Purpose: Parse user query to identify regional filtering requirements
+Key Operations:
+- Convert query to lowercase
+- Check for region keywords: ["hobo", "gent", "roes", "asse"]
+- Return uppercase region name if found
+- Return None if no region detected
+
+Function: def _format_schema_context_summary(self, schema_context) -> str
+Description: Formats schema context information for display in response
+Parameters:
+- schema_context: SchemaAwareContext object or None
+Returns: String - formatted schema context section
+Purpose: Present data context, quality, and schema information to user
+Key Operations:
+1. Calculate total records from data_samples
+2. Extract data source count
+3. Format quality metrics (if available)
+4. List relevant schemas
+5. Include data recommendations
+6. Error handling for context formatting issues
+
+====================================================
+4. RAG FUSION ANALYZER (Intelligence Engine)
+====================================================
+
+File: /src/network_rag/services/rag_fusion_analyzer.py
+Class: RAGFusionAnalyzer
+Function: async def analyze_query_with_data_awareness(self, query: str) -> Tuple[Dict[str, Any], SchemaAwareContext]
+Description: Enhanced analysis combining RAG fusion with schema-aware data context
+Parameters:
+- query: User query string
+Returns: Tuple of (guidance_dict, schema_context)
+Purpose: Provide intelligent tool selection with data awareness
+Key Operations:
+1. Standard RAG fusion analysis via analyze_query_for_tool_selection()
+2. Schema context building via context_builder.build_context_for_query()
+3. Guidance enhancement via _enhance_guidance_with_data_context()
+4. Error handling with fallback guidance
+
+Function: async def analyze_query_for_tool_selection(self, query: str) -> Dict[str, Any]
+Description: Core RAG fusion analysis for intelligent tool recommendation
+Parameters:
+- query: User query string
+Returns: Dict with confidence, tool_recommendation, analysis_type, approach, reasoning, recommendations
+Purpose: Analyze query intent and recommend appropriate tools/strategies
+Key Operations:
+1. Multi-strategy document search via _perform_fusion_search()
+2. Document-based guidance via _analyze_documents_for_guidance()
+3. Fallback guidance via _fallback_guidance() if no documents found
+4. Exception handling with fallback
+
+Function: async def _perform_fusion_search(self, query: str) -> List[Any]
+Description: Performs multiple search strategies to gather relevant documents
+Parameters:
+- query: User query string
+Returns: List[Any] - combined documents from all search strategies
+Purpose: Cast a wide net for relevant documentation using multiple search approaches
+Key Operations:
+1. Creates 4 search strategies:
+   - "tool selection for: {query}"
+   - "how to handle query: {query}"
+   - "MCP tool for {query}"
+   - "network analysis approach for: {query}"
+2. Executes document_controller.search_documents() for each strategy
+3. Combines all results into single list
+4. Error handling per search strategy
+
+Function: async def _analyze_documents_for_guidance(self, query: str, documents: List[Any]) -> Dict[str, Any]
+Description: Analyzes search results to provide intelligent tool guidance
+Parameters:
+- query: User query string
+- documents: List of retrieved documents
+Returns: Dict with confidence, tool_recommendation, analysis_type, approach, reasoning, recommendations
+Purpose: Extract actionable guidance from document analysis and query patterns
+Key Operations:
+1. Initialize tool scores: list_network_devices, get_device_details, query_network_resources
+2. Initialize analysis patterns: device_listing, device_details, complex_analysis
+3. Query pattern analysis:
+   - Device listing patterns: 'how many', 'count', 'list all', 'show all', 'inventory'
+   - Regional patterns: 'olts in', 'devices in' + region names
+   - Device details patterns: 'specific', 'details for', 'configuration of'
+4. Document content analysis for tool mentions and patterns
+5. Confidence calculation and best match determination
+6. Reasoning generation
+
+Function: def _fallback_guidance(self, query: str) -> Dict[str, Any]
+Description: Provides guidance when RAG search fails using pattern-based analysis
+Parameters:
+- query: User query string
+Returns: Dict with confidence, tool_recommendation, analysis_type, approach, reasoning, recommendations
+Purpose: Ensure system always provides guidance even without document search results
+Key Operations:
+1. Pattern scoring for device listing vs device details
+2. Keyword analysis for tool recommendation
+3. Confidence level assignment based on pattern strength
+4. Fallback to general analysis if no patterns match
+
+====================================================
+5. SCHEMA CONTEXT BUILDER
+====================================================
+
+File: /src/network_rag/services/schema_aware_context.py
+Class: SchemaAwareContextBuilder
+Function: async def build_context_for_query(self, query: str) -> SchemaAwareContext
+Description: Builds simplified schema-aware context for LLM consumption
+Parameters:
+- query: User query string
+Returns: SchemaAwareContext object with schemas, data samples, summaries
+Purpose: Provide structured context about data schemas and business rules to enhance LLM responses
+Key Operations:
+1. Schema identification via schema_registry.get_schemas_for_query_intent()
+2. Data sample retrieval via _get_basic_data_samples()
+3. Schema summary building via _build_schema_summary()
+4. Business context extraction via _build_business_context()
+5. Contextual recommendations via _generate_context_recommendations()
+
+Function: def _get_basic_data_samples(self, schema_names: List[str]) -> Dict[str, Any]
+Description: Creates mock data samples for specified schemas
+Parameters:
+- schema_names: List of schema names to generate samples for
+Returns: Dict mapping schema names to mock sample metadata
+Purpose: Provide data availability information for context building
+Key Operations:
+- Creates mock samples with record_count, sample_size, total_count
+- Uses schema-specific counts (ftth_olt: 7, others: 5)
+- Sets representative flag to True
+
+Function: def _build_schema_summary(self, schemas: List[DataSchema], data_samples: Dict[str, Any]) -> Dict[str, Any]
+Description: Builds comprehensive schema summary for LLM understanding
+Parameters:
+- schemas: List of relevant DataSchema objects
+- data_samples: Dictionary of data sample metadata
+Returns: Dict with available_data_types, data_structures, relationships, constraints
+Purpose: Provide LLM with structured understanding of data schemas and their properties
+Key Operations:
+1. Extract available data types with descriptions and record counts
+2. Build data structure information (type, key_fields, required_fields)
+3. Include schema relationships if available
+4. Add constraints and validation rules
+
+Function: def _build_business_context(self, schemas: List[DataSchema]) -> Dict[str, Any]
+Description: Extracts business context and operational rules from schemas
+Parameters:
+- schemas: List of DataSchema objects
+Returns: Dict with domain, use_cases, business_rules, operational_context
+Purpose: Provide business and operational context to guide LLM responses
+Key Operations:
+1. Set domain to "Network Infrastructure Management"
+2. Extract use cases and business rules from schema business_context
+3. Add operational context based on schema types
+4. Include FTTH-specific concerns if ftth_olt schema present
+
+Function: def _generate_context_recommendations(self, data_samples: Dict[str, Any]) -> List[str]
+Description: Generates contextual recommendations based on data sample availability
+Parameters:
+- data_samples: Dictionary of data sample metadata
+Returns: List[str] - contextual recommendations
+Purpose: Provide data-driven recommendations about system usage
+Key Operations:
+1. Check data sample availability
+2. Generate recommendations based on data types present
+3. Add specific recommendations for ftth_olt and lag data
+4. Fallback recommendations for limited data scenarios
+
+====================================================
+6. SCHEMA REGISTRY (Intent Analysis)
+====================================================
+
+File: /src/network_rag/services/schema_registry.py
+Class: SchemaRegistry
+Function: def get_schemas_for_query_intent(self, query: str) -> List[DataSchema]
+Description: Maps user query to relevant data schemas using keyword analysis
+Parameters:
+- query: User query string
+Returns: List[DataSchema] - schemas relevant to the query
+Purpose: Identify which data schemas are relevant to the user's query for context building
+Key Operations:
+1. Query preprocessing (lowercase conversion)
+2. Keyword mapping:
+   - 'ftth_olt': ['ftth', 'olt', 'fiber', 'optical']
+   - 'lag': ['lag', 'link', 'aggregation', 'lacp']
+   - 'mobile_modem': ['mobile', 'modem', 'nokia', '5g']
+   - 'team': ['team', 'responsible', 'contact', 'escalation']
+   - 'pxc': ['pxc', 'cross', 'connect', 'integration']
+3. Schema retrieval for matching keywords
+4. Default schema fallback (['ftth_olt', 'team']) if no matches
+
+Function: def get_schema(self, schema_name: str) -> Optional[DataSchema]
+Description: Retrieves a specific schema by name
+Parameters:
+- schema_name: Name of the schema to retrieve
+Returns: Optional[DataSchema] - the schema object or None
+Purpose: Access individual schema definitions with full metadata
+Key Operations:
+- Direct dictionary lookup in self.schemas
+- Returns None if schema not found
+
+====================================================
+7. NETWORK API ADAPTER (Data Retrieval)
+====================================================
+
+File: /RAG/main.py (Mock Implementation)
+Class: MockNetworkAdapter
+Function: async def fetch_ftth_olts(self, filters=None)
+Description: Retrieves FTTH OLT devices with optional filtering
+Parameters:
+- filters: Optional dict with filtering criteria (region, environment, managed_by_inmanta)
+Returns: List[MockFTTHOLT] - filtered list of FTTH OLT devices
+Purpose: Simulate network API calls to retrieve live FTTH OLT device data
+Key Operations:
+1. Start with all sample_olts (7 devices total)
+2. Apply region filter if specified: [olt for olt in olts if olt.region == filters["region"]]
+3. Apply environment filter if specified
+4. Apply Inmanta management filter if specified
+5. Return filtered device list
+
+Sample Data (7 Total OLTs):
+- OLT17PROP01: HOBO, PRODUCTION, 10Gbps, 200 services, Inmanta=True
+- OLT18PROP02: HOBO, PRODUCTION, 10Gbps, 150 services, Inmanta=False (issue)
+- OLT19PROP03: HOBO, PRODUCTION, 100Gbps, 0 services, Inmanta=True (issue)
+- OLT20PROP01: HOBO, UAT, 10Gbps, 50 services, Inmanta=True
+- OLT21GENT01: GENT, PRODUCTION, 10Gbps, 300 services, Inmanta=True
+- OLT22GENT02: GENT, PRODUCTION, 100Gbps, 250 services, Inmanta=True
+- OLT23ROES01: ROES, PRODUCTION, 10Gbps, 180 services, Inmanta=True
+
+====================================================
+8. DEVICE HEALTH SUMMARY
+====================================================
+
+File: /RAG/main.py
+Class: MockFTTHOLT
+Function: def get_health_summary(self)
+Description: Generates comprehensive health and configuration summary for an FTTH OLT device
+Parameters: None (uses self attributes)
+Returns: Dict with device metadata and health indicators
+Purpose: Provide structured device information for analysis and LLM context
+Key Operations:
+- Extracts core device properties: name, region, environment
+- Calculates derived properties: connection_type, complete_config
+- Formats for LLM consumption
+- Provides health indicators
+
+Return Structure:
+{
+    "name": str,                    # Device identifier (e.g., "OLT17PROP01")
+    "region": str,                  # Geographic region (HOBO, GENT, ROES, ASSE)
+    "environment": str,             # Deployment environment (PRODUCTION, UAT, TEST)
+    "bandwidth_gbps": int,          # Bandwidth capacity in Gbps
+    "service_count": int,           # Number of active services
+    "managed_by_inmanta": bool,     # Inmanta management status
+    "esi_name": str,               # Ethernet Segment Identifier
+    "connection_type": str,         # "1x10G" or "1x100G" based on bandwidth
+    "complete_config": bool         # True if managed and has services
+}
+
+====================================================
+9. LLM GENERATION (LM Studio Integration)
+====================================================
+
+File: /RAG/main.py
+Function: async def lm_studio_generate_response(messages)
+Description: Generates intelligent responses using real LM Studio API
+Parameters:
+- messages: List of message objects with role and content
+Returns: String - LLM generated response or error message
+Purpose: Interface with LM Studio to generate intelligent network analysis
+Key Operations:
+1. Message format conversion to OpenAI API format
+2. HTTP payload construction:
+   - model: "llama-3.2-8x3b-moe-dark-champion-instruct-uncensored-abliterated-18.4b@q8_0"
+   - messages: converted message array
+   - max_tokens: 2048
+   - temperature: 0.7
+   - stream: false
+3. HTTP POST to http://127.0.0.1:1234/v1/chat/completions
+4. Response parsing and content extraction
+5. Error handling for connection issues
+
+LLM Context Structure:
+System Message: "You are a network infrastructure analyst. Analyze the FTTH OLT device data and provide insights about the deployment, configuration status, and any recommendations."
+
+User Message Format:
+"Query: {original_query}
+
+FTTH OLT Devices Found: {device_count}
+
+Device Details:
+- {device1}: {region} region, {environment} environment, {bandwidth}Gbps, {services} services, Inmanta managed: {managed}
+- {device2}: ...
+- ..."
+
+====================================================
+10. DOCUMENT CONTROLLER (Mock Knowledge Base)
+====================================================
+
+File: /RAG/main.py (Mock Implementation)
+Class: MockMongoDBAdapter
+Function: async def search_documents(self, query: str, limit: int = 10)
+Description: Mock document search using keyword matching
+Parameters:
+- query: Search query string
+- limit: Maximum number of results to return
+Returns: List[Document] - matching documents
+Purpose: Simulate knowledge base search for RAG enhancement
+Key Operations:
+1. Query preprocessing (lowercase conversion)
+2. Keyword matching against sample documents:
+   - Content matching
+   - Title matching  
+   - Keywords array matching
+3. Document object creation
+4. Result limiting
+
+Sample Documents (3 Total):
+1. "FTTH OLT Configuration Guide" - usefulness: 0.92
+2. "Network Troubleshooting Best Practices" - usefulness: 0.88
+3. "HOBO Region Network Architecture" - usefulness: 0.85
+
+====================================================
+11. RESPONSE FORMATTER
+====================================================
+
+File: /src/network_rag/controller/query_controller.py
+Function: execute_intelligent_network_query() (Response Assembly Section)
+Description: Assembles complete formatted response from all system components
+Parameters: Various components (guidance, schema_context, LLM response, etc.)
+Returns: String - complete formatted markdown response
+Purpose: Create user-friendly, structured response combining all analysis results
+Key Operations:
+1. Response structure initialization:
+   - Header: "# Schema-Aware Network Analysis"
+   - Query acknowledgment: "**Query:** {original_query}"
+2. Schema context formatting (if available)
+3. RAG guidance formatting (if documents analyzed)
+4. Core analysis result inclusion (LLM response)
+5. Knowledge-based recommendations appending
+6. Final response assembly: "".join(response_parts)
+
+Final Response Structure:
+```
+# Schema-Aware Network Analysis
+**Query:** Show me FTTH OLTs in HOBO region
+
+## 📊 Data Context
+**Available Data:** X records across Y data sources
+**Data Quality:** schema_name: Status (score%)
+**Relevant Schemas:** schema1, schema2
+**Data Recommendations:**
+💡 Recommendation 1
+💡 Recommendation 2
+
+[LLM GENERATED INTELLIGENT ANALYSIS - 1500+ characters]
+
+## Knowledge-Based Recommendations
+💡 Use list_network_devices for inventory queries
+💡 Data samples available for analysis.
+```
+
+====================================================
+HELPER FUNCTIONS
+====================================================
+
+File: /src/network_rag/services/rag_fusion_analyzer.py
+Function: def _calculate_confidence(self, score: int) -> str
+Description: Calculates confidence level based on numerical score
+Parameters:
+- score: Integer confidence score
+Returns: String - "HIGH", "MEDIUM", or "LOW"
+Key Operations:
+- score > 3: "HIGH"
+- score > 1: "MEDIUM" 
+- else: "LOW"
+
+Function: def _determine_approach(self, query: str, analysis_type: str) -> str
+Description: Determines the best analytical approach based on query analysis
+Parameters:
+- query: User query string
+- analysis_type: Type of analysis detected
+Returns: String - approach description
+Key Operations:
+- Pattern matching for specific approaches:
+  - Inventory: "how many", "list all", "show me all", "count"
+  - Configuration: "configuration of", "details for", "show me", "get info"
+  - Impact: "impact", "happens if", "connected to", "depends on"
+- Fallback: f"Intelligent {analysis_type.replace('_', ' ')} approach"
+
+Function: def _generate_reasoning(self, tool: str, analysis_type: str) -> str
+Description: Generates human-readable reasoning for tool recommendations
+Parameters:
+- tool: Recommended tool name
+- analysis_type: Type of analysis performed
+Returns: String - reasoning explanation
+Key Operations:
+- Tool-specific reasoning:
+  - list_network_devices: "Query requests device inventory or counts"
+  - get_device_details: "Query asks for specific device information"
+  - query_network_resources: "Query requires cross-system analysis"
+- Fallback reasoning based on analysis type
+
+====================================================
+ERROR HANDLING FUNCTIONS
+====================================================
+
+File: /src/network_rag/services/response_formatter.py
+Function: format_error_response(self, title: str, message: str, suggestions: List[str]) -> str
+Description: Formats error responses with helpful suggestions
+Parameters:
+- title: Error title
+- message: Error description
+- suggestions: List of suggested solutions
+Returns: String - formatted error response
+Purpose: Provide user-friendly error messages with actionable suggestions
+
+Common Error Scenarios:
+1. "No Devices Found" - when filtering returns empty results
+2. "Device Not Specified" - when specific device queries lack device name
+3. "Device Not Found" - when named device doesn't exist
+4. "Analysis Error" - when query execution fails
+
+====================================================
+CONFIGURATION & INITIALIZATION
+====================================================
+
+File: /RAG/main.py
+Function: async def initialize(self, use_mock_data: bool = True)
+Description: Initializes the complete Network RAG system with all dependencies
+Parameters:
+- use_mock_data: Boolean flag for mock vs real data sources
+Returns: Boolean - initialization success status
+Purpose: Set up all system components, adapters, and dependencies
+Key Operations:
+1. Adapter initialization (MongoDB, Network API, LLM)
+2. LM Studio connectivity testing
+3. Service initialization (SchemaRegistry, SchemaAwareContextBuilder)
+4. Controller setup (DocumentController, QueryController)
+5. RAG analyzer initialization with schema awareness
+6. MCP server adapter creation
+7. Database initialization (if using real MongoDB)
+
+LM Studio Detection Logic:
+1. Import aiohttp
+2. Create test payload with minimal request
+3. POST to http://127.0.0.1:1234/v1/chat/completions
+4. Validate response structure
+5. Success: Use enhanced LM Studio adapter
+6. Failure: Fall back to mock LLM adapter
+
+====================================================
+DATA FLOW SUMMARY
+====================================================
+
+Input: "Show me FTTH OLTs in HOBO region"
+│
+├─ Query Analysis: Detects "device_listing" pattern
+├─ Schema Mapping: "ftth" → ftth_olt schema  
+├─ Region Extraction: "hobo" → "HOBO" filter
+├─ Data Retrieval: 4 HOBO devices from 7 total
+├─ Health Summary: Device details extracted
+├─ LLM Generation: 1500+ char intelligent analysis
+└─ Response Assembly: Formatted markdown output
+
+Output: Complete network analysis with:
+- Query acknowledgment
+- Data context (4 records, ftth_olt schema)
+- Intelligent insights about HOBO region deployment
+- Configuration status analysis
+- Actionable recommendations
+- Knowledge-based suggestions
+
+====================================================
+MOCK VS REAL COMPONENTS
+====================================================
+
+REAL (Production-Ready):
+- Query Controller orchestration
+- RAG Fusion Analyzer intelligence
+- Schema Registry with comprehensive network schemas
+- LM Studio integration with real HTTP API calls
+- Region extraction and filtering logic
+- Response formatting and assembly
+
+MOCK (Demo/Development):
+- MongoDB adapter (uses in-memory mock data)
+- Network API adapter (uses hardcoded sample devices)
+- Document search (uses 3 sample documents)
+- Vector similarity search (uses hash-based mock scoring)
+- Data quality metrics (basic availability checks only)
+
+====================================================
