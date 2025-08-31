@@ -6,7 +6,7 @@ from datetime import datetime
 
 from ..models import (
     Document, DocumentType,
-    KnowledgePort, VectorSearchPort, LLMPort,
+    VectorSearchPort, LLMPort,
     DocumentError
 )
 
@@ -16,7 +16,7 @@ class DocumentController:
     
     def __init__(
         self,
-        knowledge_port: KnowledgePort,
+        knowledge_port: VectorSearchPort,
         vector_search_port: VectorSearchPort,
         llm_port: LLMPort
     ):

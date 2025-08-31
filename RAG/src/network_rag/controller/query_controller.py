@@ -6,8 +6,8 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from ..models import (
-    QueryResult, SourceType, Message, MessageRole,
-    NetworkPort, VectorSearchPort, LLMPort, ConversationPort
+    QueryResult, SourceType,
+    NetworkPort, VectorSearchPort, LLMPort
 )
 from ..services.rag_fusion_analyzer import RAGFusionAnalyzer
 from ..services.response_formatter import ResponseFormatter
@@ -21,13 +21,11 @@ class QueryController:
         network_port: NetworkPort,
         vector_search_port: VectorSearchPort,
         llm_port: LLMPort,
-        conversation_port: ConversationPort,
         document_controller=None
     ):
         self.network_port = network_port
         self.vector_search_port = vector_search_port
         self.llm_port = llm_port
-        self.conversation_port = conversation_port
         
         # RAG fusion services (initialized later via dependency injection)
         self.rag_analyzer = None
@@ -77,8 +75,7 @@ class QueryController:
             if query_intent.get("needs_knowledge_base", True):
                 data_tasks.append(self._fetch_knowledge_intelligence(query, result))
             
-            if conversation_id and query_intent.get("needs_conversation_context", False):
-                data_tasks.append(self._fetch_conversation_intelligence(conversation_id, result))
+            # Conversation intelligence removed for simplicity
             
             # Execute all data gathering tasks concurrently
             await asyncio.gather(*data_tasks, return_exceptions=True)
@@ -306,69 +303,12 @@ class QueryController:
             result.supporting_data["knowledge_error"] = str(e)
             result.add_limitation(f"Knowledge search unavailable: {str(e)}")
     
-    async def _fetch_conversation_intelligence(self, conversation_id: str, result: QueryResult) -> None:
-        """
-        Business logic for intelligent conversation context extraction
-        
-        Business Rules:
-        - Focus on relevant recent exchanges
-        - Extract key topics and unresolved questions
-        - Maintain conversation continuity
-        - Respect user privacy and context boundaries
-        """
-        try:
-            conversation = await self.conversation_port.get_conversation(conversation_id)
-            
-            if conversation:
-                # Business Rule: Extract relevant context intelligently
-                recent_messages = conversation.get_recent_messages(6)
-                key_topics = conversation.extract_key_topics()
-                
-                context_intelligence = {
-                    "conversation_summary": {
-                        "duration_minutes": round(conversation.get_duration_minutes(), 1),
-                        "turn_count": conversation.get_turn_count(),
-                        "satisfaction_score": round(conversation.calculate_satisfaction_score(), 2),
-                        "main_topics": key_topics
-                    },
-                    "recent_context": [
-                        {
-                            "role": msg.role.value,
-                            "content_summary": msg.content[:200] + "..." if len(msg.content) > 200 else msg.content,
-                            "timestamp": msg.timestamp.isoformat(),
-                            "is_recent": msg.is_recent(minutes=15)
-                        }
-                        for msg in recent_messages
-                        if msg.role != MessageRole.SYSTEM
-                    ]
-                }
-                
-                result.supporting_data["conversation_intelligence"] = context_intelligence
-                
-                # Business Rule: Context confidence based on recency and relevance
-                recent_count = sum(1 for msg in recent_messages if msg.is_recent(minutes=30))
-                context_confidence = min(0.8, 0.3 + (recent_count / len(recent_messages)) * 0.5)
-                
-                result.add_source(
-                    SourceType.CONVERSATION_HISTORY,
-                    conversation_id,
-                    context_confidence,
-                    source_name="Conversation Context Intelligence",
-                    content_summary=f"Context from {len(recent_messages)} recent messages",
-                    topics=key_topics,
-                    satisfaction=conversation.calculate_satisfaction_score()
-                )
-                
-        except Exception as e:
-            result.supporting_data["conversation_error"] = str(e)
-            result.add_limitation(f"Conversation context unavailable: {str(e)}")
-    
     async def _build_intelligent_context(
         self, 
         query: str, 
         result: QueryResult, 
         conversation_id: Optional[str]
-    ) -> List[Message]:
+    ) -> List[Dict[str, Any]]:
         """
         Business logic for building optimal LLM context with intelligence
         
@@ -404,27 +344,12 @@ When provided with network data, analyze it for:
 - Potential issues and recommendations
 - Operational priorities and next steps"""
         
-        messages.append(Message(
-            id=f"system_{int(datetime.utcnow().timestamp())}_{hash(system_content[:50]) % 10000}",
-            role=MessageRole.SYSTEM,
-            content=system_content
-        ))
+        messages.append({
+            "role": "system",
+            "content": system_content
+        })
         
-        # Business Rule: Add conversation context intelligently
-        if conversation_id and "conversation_intelligence" in result.supporting_data:
-            context_data = result.supporting_data["conversation_intelligence"]
-            
-            if context_data["recent_context"]:
-                context_summary = "CONVERSATION CONTEXT:\n"
-                for ctx in context_data["recent_context"][-3:]:  # Last 3 exchanges
-                    role_icon = "👤" if ctx["role"] == "user" else "🤖"
-                    context_summary += f"{role_icon} {ctx['content_summary']}\n"
-                
-                messages.append(Message(
-                    id=f"context_{int(datetime.utcnow().timestamp())}_{hash(context_summary[:50]) % 10000}",
-                    role=MessageRole.SYSTEM,
-                    content=context_summary
-                ))
+        # Conversation context removed for simplicity
         
         # Business Rule: Structure intelligence for optimal LLM processing
         context_parts = ["CURRENT QUERY:", f"'{query}'", ""]
@@ -470,11 +395,10 @@ When provided with network data, analyze it for:
         
         # Build final user message
         user_content = "\n".join(context_parts)
-        messages.append(Message(
-            id=f"user_{int(datetime.utcnow().timestamp())}_{hash(user_content[:50]) % 10000}",
-            role=MessageRole.USER,
-            content=user_content
-        ))
+        messages.append({
+            "role": "user",
+            "content": user_content
+        })
         
         return messages
     

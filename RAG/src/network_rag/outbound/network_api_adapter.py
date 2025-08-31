@@ -9,7 +9,6 @@ from datetime import datetime
 from pathlib import Path
 
 from ..models import FTTHOLTResource, Environment, ConnectionType, NetworkPort, NetworkAPIError
-from ..infrastructure.norm_api_config import get_api_config, get_request_config
 
 
 class NetworkAPIAdapter(NetworkPort):
@@ -43,25 +42,26 @@ class NetworkAPIAdapter(NetworkPort):
                 'mobile_modem': self.local_data_path / 'mobile_modem.json'
             }
         
-        # Load NORM API configuration (only if not using local files)
+        # API configuration for non-local files (simplified)
         if not self.use_local_files:
-            self.norm_config = get_api_config()
             self.resource_configs = {
-                'ftth_olt': get_request_config('ftth_olt'),
-                'lag': get_request_config('lag'),
-                'pxc': get_request_config('pxc'),
-                'circuit': get_request_config('circuit'),
-                'team': get_request_config('team'),
-                'mobile_modem': get_request_config('mobile_modem')
+                'ftth_olt': {'url': f"{self.base_url}/ftth_olt"},
+                'lag': {'url': f"{self.base_url}/lag"},
+                'pxc': {'url': f"{self.base_url}/pxc"},
+                'circuit': {'url': f"{self.base_url}/circuit"},
+                'team': {'url': f"{self.base_url}/team"},
+                'mobile_modem': {'url': f"{self.base_url}/mobile_modem"}
             }
     
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session with proper headers and timeout"""
         if self.session is None and not self.use_local_files:
-            # Use NORM API headers configuration
-            from ..infrastructure.norm_api_config import api_config_manager
-            headers = api_config_manager.get_headers()
-            headers['User-Agent'] = 'NetworkRAG/1.0'
+            # Simple headers configuration
+            headers = {
+                'Authorization': f'Bearer {self.api_key}',
+                'Content-Type': 'application/json',
+                'User-Agent': 'NetworkRAG/1.0'
+            }
             
             timeout = aiohttp.ClientTimeout(total=self.timeout)
             self.session = aiohttp.ClientSession(headers=headers, timeout=timeout)

@@ -7,7 +7,7 @@ import json
 from typing import List, Dict, Any, Optional, Union, AsyncGenerator
 from datetime import datetime
 
-from ..models import Message, MessageRole, LLMError
+from ..models import LLMError
 
 
 class LlamaAdapter:
@@ -33,21 +33,13 @@ class LlamaAdapter:
             self.session = aiohttp.ClientSession(timeout=timeout)
         return self.session
     
-    async def generate_response(self, messages: List[Union[Message, Dict[str, str]]]) -> str:
+    async def generate_response(self, messages: List[Dict[str, str]]) -> str:
         """Generate response using Llama model"""
         
-        # Convert messages to Ollama format
+        # Convert messages to Ollama format (expecting dict format)
         ollama_messages = []
         for msg in messages:
-            if hasattr(msg, 'role') and hasattr(msg, 'content'):
-                # Message object
-                role = "system" if msg.role == MessageRole.SYSTEM else "user"
-                ollama_messages.append({
-                    "role": role,
-                    "content": msg.content
-                })
-            elif isinstance(msg, dict) and 'role' in msg and 'content' in msg:
-                # Dict format
+            if isinstance(msg, dict) and 'role' in msg and 'content' in msg:
                 ollama_messages.append({
                     "role": msg['role'],
                     "content": msg['content']

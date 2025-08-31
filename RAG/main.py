@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Network RAG System - Main Entry Point
-Demonstrates Schema-Aware RAG system with comprehensive testing scenarios
+Demonstrates Schema-Aware RAG system with two core scenarios
 """
 
 import asyncio
@@ -9,7 +9,6 @@ import os
 import sys
 from datetime import datetime
 from typing import Dict, Any, Optional
-import json
 from pathlib import Path
 
 # Add the src directory to the Python path
@@ -19,13 +18,12 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 from network_rag.models import Document, DocumentType
 from network_rag.controller.query_controller import QueryController
 from network_rag.controller.document_controller import DocumentController
-from network_rag.services.rag_fusion_analyzer import RAGFusionAnalyzer
 from network_rag.services.schema_registry import SchemaRegistry
 from network_rag.services.data_quality_service import DataQualityService
 from network_rag.services.schema_aware_context import SchemaAwareContextBuilder
 from network_rag.inbound.mcp_server import MCPServerAdapter
 
-# Real implementations (when available)
+# Adapters
 from network_rag.outbound.mongodb_adapter import MongoDBAdapter
 from network_rag.outbound.network_api_adapter import NetworkAPIAdapter
 from network_rag.outbound.llama_adapter import LlamaAdapter
@@ -52,22 +50,18 @@ class NetworkRAGDemo:
                 llm_adapter = await self._create_mock_llm_adapter()
             else:
                 print("🔗 Connecting to real services...")
-                # Use real adapters (would need proper configuration)
                 mongodb_adapter = MongoDBAdapter(
                     connection_string=os.getenv("MONGODB_URI", "mongodb://localhost:27017"),
                     database_name="network_rag"
                 )
-                # Use local files for network data
                 network_adapter = NetworkAPIAdapter(
                     base_url="file://local",
                     api_key="local_files"
                 )
-                # Check if LM Studio is available with your model
-                print("🔍 Checking for Llama model on LM Studio...")
+                print("🔍 Checking for LM Studio...")
                 try:
                     import aiohttp
                     async with aiohttp.ClientSession() as session:
-                        # Test LM Studio API with a simple request
                         test_payload = {
                             "model": "llama-3.2-8x3b-moe-dark-champion-instruct-uncensored-abliterated-18.4b@q8_0",
                             "messages": [{"role": "user", "content": "Hello"}],
@@ -81,7 +75,6 @@ class NetworkRAGDemo:
                                 data = await response.json()
                                 if 'choices' in data and len(data['choices']) > 0:
                                     print("✅ LM Studio is running with your Llama model!")
-                                    # Create enhanced mock that uses real Llama for generate_response
                                     llm_adapter = await self._create_lm_studio_enhanced_mock()
                                 else:
                                     print("⚠️  LM Studio responded but no model available")
@@ -89,7 +82,7 @@ class NetworkRAGDemo:
                             else:
                                 raise Exception(f"LM Studio returned {response.status}")
                 except Exception as e:
-                    print(f"⚠️  LM Studio not available ({str(e)}). Using mock LLM for demonstration...")
+                    print(f"⚠️  LM Studio not available ({str(e)}). Using mock LLM...")
                     llm_adapter = await self._create_mock_llm_adapter()
             
             # Initialize core services
@@ -108,7 +101,6 @@ class NetworkRAGDemo:
                 network_port=network_adapter,
                 vector_search_port=mongodb_adapter,
                 llm_port=llm_adapter,
-                conversation_port=mongodb_adapter,
                 document_controller=self.document_controller
             )
             
@@ -118,16 +110,10 @@ class NetworkRAGDemo:
                 context_builder
             )
             
-            # Create mock learning and validation controllers
-            learning_controller = self._create_mock_learning_controller()
-            validation_controller = self._create_mock_validation_controller()
-            
-            # Initialize MCP server
+            # Initialize simplified MCP server
             self.server = MCPServerAdapter(
                 query_controller=self.query_controller,
-                document_controller=self.document_controller,
-                learning_controller=learning_controller,
-                validation_controller=validation_controller
+                document_controller=self.document_controller
             )
             
             # Initialize database if using real MongoDB
@@ -227,11 +213,17 @@ class NetworkRAGDemo:
                 """Index document (mock)"""
                 return True
             
-            # Add other required methods as no-ops for demo
-            async def update_document(self, document): return True
-            async def create_conversation(self, session_id, user_context, conversation_id=None): return "conv_001"
-            async def get_conversation(self, conversation_id): return None
-            async def add_message(self, conversation_id, message): return True
+            # Add stub methods for VectorSearchPort interface
+            async def find_similar_documents(self, document_id, limit=10, threshold=0.7): return []
+            async def get_document_embedding(self, document_id): return None
+            async def remove_document_from_index(self, document_id): return True
+            async def update_document_embedding(self, document_id, embedding): return True
+            async def get_index_stats(self): return {"document_count": len(self.sample_docs)}
+            async def rebuild_index(self, documents=None): return True
+            async def batch_similarity_search(self, query_embeddings, limit=10, threshold=0.7): return []
+            async def cluster_documents(self, num_clusters=5, document_types=None): return {}
+            async def get_embedding_dimension(self): return 384
+            async def close(self): pass
         
         return MockMongoDBAdapter()
     
@@ -337,7 +329,6 @@ class NetworkRAGDemo:
                 words = text.lower().replace('.', '').replace(',', '').split()
                 keywords = [word for word in words if len(word) > 3 and word not in common_words]
                 
-                # Get most frequent words
                 word_count = {}
                 for word in keywords:
                     word_count[word] = word_count.get(word, 0) + 1
@@ -346,62 +337,11 @@ class NetworkRAGDemo:
                 return [word for word, count in sorted_words[:max_keywords]]
             
             async def generate_response(self, messages):
-                """Generate basic mock response - FORCES USE OF REAL LLM WHEN AVAILABLE"""
-                # Simple fallback that doesn't cheat with pre-written responses
+                """Generate basic mock response"""
                 return "Mock LLM unavailable. Please configure a real LLM service (LM Studio, Ollama, etc.) to get intelligent network analysis."
         
         return MockLLMAdapter()
     
-    async def _create_llama_enhanced_mock(self, model_name: str):
-        """Create a mock LLM that uses real Llama for generate_response but mock for other methods"""
-        
-        # First create the base mock
-        mock_llm = await self._create_mock_llm_adapter()
-        
-        # Override the generate_response method to use real Llama
-        original_generate_response = mock_llm.generate_response
-        
-        async def llama_generate_response(messages):
-            """Use real Llama model for response generation"""
-            try:
-                import aiohttp
-                
-                # Convert messages to Ollama format
-                ollama_messages = []
-                for msg in messages:
-                    if hasattr(msg, 'role') and hasattr(msg, 'content'):
-                        role = "system" if hasattr(msg.role, 'value') and msg.role.value == "system" else "user"
-                        ollama_messages.append({"role": role, "content": msg.content})
-                    elif isinstance(msg, dict) and 'role' in msg and 'content' in msg:
-                        ollama_messages.append(msg)
-                
-                # Call Ollama API
-                payload = {
-                    "model": model_name,
-                    "messages": ollama_messages,
-                    "stream": False,
-                    "options": {"temperature": 0.7, "num_predict": 2048}
-                }
-                
-                async with aiohttp.ClientSession() as session:
-                    async with session.post("http://localhost:11434/api/chat", json=payload, timeout=aiohttp.ClientTimeout(total=60)) as response:
-                        if response.status == 200:
-                            data = await response.json()
-                            response_content = data.get('message', {}).get('content', 'No response generated')
-                            print(f"🤖 Llama response generated ({len(response_content)} chars)")
-                            return response_content
-                        else:
-                            print(f"⚠️  Llama API error: {response.status}, falling back to mock")
-                            return await original_generate_response(messages)
-                            
-            except Exception as e:
-                print(f"⚠️  Llama error: {e}, falling back to mock")
-                return await original_generate_response(messages)
-        
-        # Replace the generate_response method
-        mock_llm.generate_response = llama_generate_response
-        
-        return mock_llm
     
     async def _create_lm_studio_enhanced_mock(self):
         """Create a mock LLM that uses real LM Studio for generate_response"""
@@ -417,7 +357,7 @@ class NetworkRAGDemo:
             try:
                 import aiohttp
                 
-                # Convert messages to OpenAI format (LM Studio uses OpenAI-compatible API)
+                # Convert messages to OpenAI format
                 openai_messages = []
                 for msg in messages:
                     if hasattr(msg, 'role') and hasattr(msg, 'content'):
@@ -426,7 +366,6 @@ class NetworkRAGDemo:
                     elif isinstance(msg, dict) and 'role' in msg and 'content' in msg:
                         openai_messages.append(msg)
                 
-                # Call LM Studio API (OpenAI-compatible format)
                 payload = {
                     "model": "llama-3.2-8x3b-moe-dark-champion-instruct-uncensored-abliterated-18.4b@q8_0",
                     "messages": openai_messages,
@@ -443,47 +382,19 @@ class NetworkRAGDemo:
                             data = await response.json()
                             if 'choices' in data and len(data['choices']) > 0:
                                 response_content = data['choices'][0]['message']['content']
-                                print(f"🤖 LM Studio Llama response generated ({len(response_content)} chars)")
+                                print(f"🤖 LM Studio response generated ({len(response_content)} chars)")
                                 return response_content
                             else:
-                                print("⚠️  LM Studio: No choices in response, falling back to mock")
-                                return "LM Studio error: No response choices available. Please check your model is loaded and try again."
+                                return "LM Studio error: No response choices available. Please check your model is loaded."
                         else:
-                            print(f"⚠️  LM Studio API error: {response.status}, falling back to mock")
-                            return f"LM Studio API error (HTTP {response.status}). Please check your LM Studio server is running and try again."
-                            
+                            return f"LM Studio API error (HTTP {response.status}). Please check your LM Studio server."
             except Exception as e:
-                print(f"⚠️  LM Studio error: {e}, falling back to mock")
-                return f"LM Studio connection error: {str(e)}. Please ensure LM Studio is running on port 1234 and try again."
+                return f"LM Studio connection error: {str(e)}. Please ensure LM Studio is running on port 1234."
         
         # Replace the generate_response method
         mock_llm.generate_response = lm_studio_generate_response
         
         return mock_llm
-    
-    def _create_mock_learning_controller(self):
-        """Create mock learning controller"""
-        
-        class MockLearningController:
-            async def learn_from_query(self, query, result):
-                return {"status": "learned", "query": query}
-            
-            async def get_learning_insights(self):
-                return {"insights": "Mock learning insights"}
-        
-        return MockLearningController()
-    
-    def _create_mock_validation_controller(self):
-        """Create mock validation controller"""
-        
-        class MockValidationController:
-            async def validate_query(self, query):
-                return {"valid": True, "query": query}
-            
-            async def validate_response(self, response):
-                return {"valid": True, "response_length": len(str(response))}
-        
-        return MockValidationController()
     
     async def run_demo_scenarios(self):
         """Run comprehensive demo scenarios"""
@@ -491,7 +402,7 @@ class NetworkRAGDemo:
         print("🎯 SCHEMA-AWARE RAG SYSTEM DEMONSTRATION")
         print("="*60)
         
-        # Test scenarios
+        # Test scenarios - Core functionality demonstration
         scenarios = [
             {
                 "name": "Regional Device Inventory",
@@ -502,16 +413,6 @@ class NetworkRAGDemo:
                 "name": "Configuration Issue Analysis", 
                 "query": "Show me FTTH OLTs in HOBO region with configuration issues",
                 "description": "Tests data quality assessment and issue detection"
-            },
-            {
-                "name": "Knowledge Base Integration",
-                "query": "How to troubleshoot FTTH OLT connectivity problems?",
-                "description": "Tests knowledge base search and document retrieval"
-            },
-            {
-                "name": "Complex Analysis Query",
-                "query": "What is the total bandwidth capacity in HOBO region and are there any performance concerns?",
-                "description": "Tests complex analysis with multiple data points"
             }
         ]
         
@@ -534,11 +435,7 @@ class NetworkRAGDemo:
             except Exception as e:
                 print(f"❌ Error: {e}")
             
-            if input:  # Only prompt if running interactively
-                print("\n" + "⏱️ " + "Press Enter to continue...")
-                input()
-            else:
-                print("\n" + "-" * 50)
+            print("\n" + "-" * 50)
     
     async def interactive_mode(self):
         """Interactive query mode"""

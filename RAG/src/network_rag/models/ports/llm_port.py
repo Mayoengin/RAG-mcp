@@ -3,7 +3,6 @@
 
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, AsyncGenerator
-from ..conversation import Message
 
 
 class LLMPort(ABC):
@@ -12,7 +11,7 @@ class LLMPort(ABC):
     @abstractmethod
     async def generate_response(
         self,
-        messages: List[Message],
+        messages: List[Dict[str, Any]],
         max_tokens: int = 1000,
         temperature: float = 0.7,
         system_prompt: Optional[str] = None
@@ -37,7 +36,7 @@ class LLMPort(ABC):
     @abstractmethod
     async def stream_response(
         self,
-        messages: List[Message],
+        messages: List[Dict[str, Any]],
         max_tokens: int = 1000,
         temperature: float = 0.7,
         system_prompt: Optional[str] = None

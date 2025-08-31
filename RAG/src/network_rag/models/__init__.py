@@ -4,7 +4,6 @@
 # Core domain models
 from .ftth_olt_resource import FTTHOLTResource, Environment, ConnectionType
 from .document import Document, DocumentType
-from .conversation import Conversation, Message, Feedback, MessageRole, FeedbackType, ConversationSummary
 from .query_result import QueryResult, ResultSource, SourceType, ConfidenceLevel
 
 # Exceptions
@@ -28,10 +27,8 @@ from .exceptions import (
 # Port interfaces (imported for convenience)
 from .ports import (
     NetworkPort,
-    KnowledgePort,
     VectorSearchPort,
-    LLMPort,
-    ConversationPort
+    LLMPort
 )
 
 __all__ = [
@@ -41,12 +38,6 @@ __all__ = [
     "ConnectionType",
     "Document",
     "DocumentType", 
-    "Conversation",
-    "Message",
-    "Feedback",
-    "MessageRole",
-    "FeedbackType",
-    "ConversationSummary",
     "QueryResult",
     "ResultSource",
     "SourceType",
@@ -70,8 +61,6 @@ __all__ = [
     
     # Ports
     "NetworkPort",
-    "KnowledgePort",
     "VectorSearchPort", 
-    "LLMPort",
-    "ConversationPort"
+    "LLMPort"
 ]
