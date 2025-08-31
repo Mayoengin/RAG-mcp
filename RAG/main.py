@@ -19,7 +19,6 @@ from network_rag.models import Document, DocumentType
 from network_rag.controller.query_controller import QueryController
 from network_rag.controller.document_controller import DocumentController
 from network_rag.services.schema_registry import SchemaRegistry
-from network_rag.services.data_quality_service import DataQualityService
 from network_rag.services.schema_aware_context import SchemaAwareContextBuilder
 from network_rag.inbound.mcp_server import MCPServerAdapter
 
@@ -87,8 +86,7 @@ class NetworkRAGDemo:
             
             # Initialize core services
             schema_registry = SchemaRegistry()
-            data_quality_service = DataQualityService(network_adapter)
-            context_builder = SchemaAwareContextBuilder(schema_registry, data_quality_service)
+            context_builder = SchemaAwareContextBuilder(schema_registry)
             
             # Initialize controllers
             self.document_controller = DocumentController(
