@@ -196,13 +196,20 @@ class ServiceContainer:
         vector_search_port = await self.get_service("mongodb_adapter")
         llm_port = await self.get_service("lm_studio_adapter")
         conversation_port = await self.get_service("mongodb_adapter")
+        document_controller = await self.get_service("document_controller")
         
-        return QueryController(
+        query_controller = QueryController(
             network_port=network_port,
             vector_search_port=vector_search_port,
             llm_port=llm_port,
-            conversation_port=conversation_port
+            conversation_port=conversation_port,
+            document_controller=document_controller
         )
+        
+        # Initialize RAG fusion analyzer
+        query_controller.initialize_rag_analyzer(document_controller)
+        
+        return query_controller
     
     async def _create_document_controller(self) -> DocumentController:
         """Create document controller with dependencies"""

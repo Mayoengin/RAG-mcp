@@ -1,16 +1,14 @@
 # src/network_rag/inbound/mcp_server.py
 """MCP (Model Context Protocol) server adapter for LLM integration"""
 
-import asyncio
 import json
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from ..controller.query_controller import QueryController
 from ..controller.document_controller import DocumentController
 from ..controller.learning_controller import LearningController
 from ..controller.validation_controller import ValidationController
-from ..models import NetworkRAGException
 
 
 class MCPServerAdapter:
@@ -307,7 +305,7 @@ class MCPServerAdapter:
     async def _handle_initialize(self, request_id: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Handle MCP initialize request"""
         
-        client_info = params.get("clientInfo", {})
+        # client_info = params.get("clientInfo", {})  # Not used currently
         protocol_version = params.get("protocolVersion", "2024-11-05")
         
         return {
@@ -415,120 +413,22 @@ class MCPServerAdapter:
     # =====================================
     
     async def _execute_network_query(self, arguments: Dict[str, Any]) -> str:
-        """Execute network resource query using actual local data"""
-        
-        query = arguments.get("query", "")
-        include_recommendations = arguments.get("include_recommendations", True)
-        session_id = arguments.get("session_id")
-        
-        response_parts = [
-            f"# Network Query Results\n",
-            f"**Query:** {query}\n\n"
-        ]
+        """Execute intelligent network resource query - DELEGATES TO BUSINESS LOGIC"""
         
         try:
-            # Get network API adapter directly to fetch real data
-            network_adapter = self.query_controller.network_port
+            # ✅ PROPER ARCHITECTURE: Delegate to business logic layer
+            return await self.query_controller.execute_intelligent_network_query(arguments)
             
-            # Fetch actual FTTH OLT data from local files
-            ftth_olts = await network_adapter.fetch_ftth_olts()
-            
-            # Also get other device types mentioned in query
-            lag_data = await network_adapter._load_local_json('lag') if 'lag' in query.lower() else []
-            pxc_data = await network_adapter._load_local_json('pxc') if 'pxc' in query.lower() else []
-            mobile_data = await network_adapter._load_local_json('mobile_modem') if 'mobile' in query.lower() else []
-            team_data = await network_adapter._load_local_json('team') if 'team' in query.lower() else []
-            
-            # Format FTTH OLT data
-            if ftth_olts or 'ftth' in query.lower() or 'olt' in query.lower():
-                response_parts.append("## FTTH OLT Devices Found\n")
-                if ftth_olts:
-                    for i, olt in enumerate(ftth_olts[:10]):  # Show first 10
-                        health = olt.get_health_summary()
-                        status_icon = "✅" if health.get('complete_config') else "⚠️"
-                        response_parts.extend([
-                            f"{status_icon} **{health['name']}**\n",
-                            f"   - Environment: {health['environment']}\n",
-                            f"   - Bandwidth: {health['bandwidth_gbps']}Gbps\n",
-                            f"   - Managed by Inmanta: {'Yes' if health['managed_by_inmanta'] else 'No'}\n",
-                            f"   - Service Count: {health['service_count']}\n\n"
-                        ])
-                else:
-                    response_parts.append("No FTTH OLT devices found in local data.\n\n")
-            
-            # Format LAG data if relevant
-            if lag_data:
-                response_parts.append("## LAG Devices\n")
-                for item in lag_data[:5]:
-                    response_parts.extend([
-                        f"- **{item.get('device_name', 'Unknown')}** (LAG ID: {item.get('lag_id', 'N/A')})\n",
-                        f"  Description: {item.get('description', 'No description')}\n"
-                    ])
-                response_parts.append("\n")
-            
-            # Format PXC data if relevant
-            if pxc_data:
-                response_parts.append("## PXC Devices\n")
-                for item in pxc_data[:5]:
-                    response_parts.extend([
-                        f"- **{item.get('device_name', 'Unknown')}** (PXC ID: {item.get('pxc_id', 'N/A')})\n",
-                        f"  Description: {item.get('description', 'No description')}\n"
-                    ])
-                response_parts.append("\n")
-            
-            # Format Mobile data if relevant
-            if mobile_data:
-                response_parts.append("## Mobile Modems\n")
-                for item in mobile_data[:5]:
-                    response_parts.extend([
-                        f"- **{item.get('serial_number', 'Unknown')}** ({item.get('hardware_type', 'Unknown')})\n",
-                        f"  Subscriber: {item.get('mobile_subscriber_id', 'N/A')}\n"
-                    ])
-                response_parts.append("\n")
-            
-            # Format Team data if relevant
-            if team_data:
-                response_parts.append("## Teams\n")
-                for item in team_data[:5]:
-                    response_parts.extend([
-                        f"- **{item.get('team_name', 'Unknown')}**\n",
-                        f"  ID: {item.get('team_id', 'N/A')}\n"
-                    ])
-                response_parts.append("\n")
-            
-            # Add summary
-            total_devices = len(ftth_olts) + len(lag_data) + len(pxc_data) + len(mobile_data) + len(team_data)
-            response_parts.append(f"**Total devices found:** {total_devices}\n")
-            
-            # Add recommendations if requested
-            if include_recommendations:
-                response_parts.append("\n## Recommendations\n")
-                if ftth_olts:
-                    incomplete_olts = [olt for olt in ftth_olts if not olt.get_health_summary().get('complete_config')]
-                    if incomplete_olts:
-                        response_parts.append(f"- Review configuration for {len(incomplete_olts)} OLTs with incomplete configs\n")
-                    
-                    production_olts = [olt for olt in ftth_olts if olt.is_production()]
-                    if production_olts:
-                        response_parts.append(f"- Monitor {len(production_olts)} production OLTs for performance\n")
-                
-                response_parts.append("- Use `get_device_details` for specific device information\n")
-        
         except Exception as e:
-            response_parts.extend([
-                "## Error\n",
-                f"❌ Failed to retrieve network data: {str(e)}\n",
-                "Please check the local JSON files and try again.\n"
-            ])
-        
-        return "".join(response_parts)
+            # Handle protocol-level errors
+            return f"# Network Query Error\n\n❌ **Error:** {str(e)}\n\n💡 **Suggestion:** Try a simpler query or check your connection."
     
     async def _execute_knowledge_search(self, arguments: Dict[str, Any]) -> str:
         """Execute knowledge base search"""
         
         query = arguments.get("query", "")
         limit = arguments.get("limit", 5)
-        document_types = arguments.get("document_types")
+        # document_types = arguments.get("document_types")  # Not used currently
         
         # Search documents
         documents = await self.document_controller.search_documents(
@@ -965,6 +865,572 @@ class MCPServerAdapter:
             response_parts.append(f"❌ Error retrieving device details: {str(e)}\n")
         
         return "".join(response_parts)
+    
+    # =====================================
+    # RAG FUSION METHODS
+    # =====================================
+    
+    async def _rag_fusion_search(self, query: str) -> Dict[str, Any]:
+        """Use RAG fusion to search knowledge base and determine best approach"""
+        
+        try:
+            # Multiple search strategies for higher confidence
+            searches = [
+                f"tool selection for: {query}",
+                f"how to handle query: {query}",  
+                f"MCP tool for {query}",
+                f"network analysis approach for: {query}"
+            ]
+            
+            all_results = []
+            for search_query in searches:
+                try:
+                    documents = await self.document_controller.search_documents(
+                        query=search_query,
+                        limit=3,
+                        use_vector_search=True
+                    )
+                    all_results.extend(documents)
+                except Exception as e:
+                    print(f"Search failed for '{search_query}': {e}")
+                    continue
+            
+            if not all_results:
+                return self._default_guidance(query)
+            
+            # Analyze results to determine guidance
+            return await self._analyze_rag_results(query, all_results)
+            
+        except Exception as e:
+            print(f"RAG fusion search failed: {e}")
+            return self._default_guidance(query)
+    
+    async def _analyze_rag_results(self, query: str, documents: List) -> Dict[str, Any]:
+        """Analyze RAG search results to provide guidance"""
+        
+        # Count tool mentions in the documents
+        tool_mentions = {
+            'list_network_devices': 0,
+            'get_device_details': 0, 
+            'query_network_resources': 0
+        }
+        
+        analysis_patterns = {
+            'device_listing': 0,
+            'device_details': 0,
+            'complex_analysis': 0
+        }
+        
+        recommendations = []
+        confidence_score = 0
+        
+        query_lower = query.lower()
+        
+        for doc in documents[:5]:  # Top 5 most relevant
+            content = doc.content.lower() if hasattr(doc, 'content') else str(doc).lower()
+            title = doc.title.lower() if hasattr(doc, 'title') else ""
+            
+            # Count tool mentions
+            for tool_name in tool_mentions.keys():
+                if tool_name in title or tool_name in content:
+                    tool_mentions[tool_name] += 2  # Higher weight for matches
+                    confidence_score += 1
+            
+            # Analyze patterns
+            if any(word in content for word in ['inventory', 'count', 'list all', 'how many']):
+                analysis_patterns['device_listing'] += 1
+                
+            if any(word in content for word in ['specific device', 'configuration', 'details for']):
+                analysis_patterns['device_details'] += 1
+                
+            if any(word in content for word in ['impact', 'analysis', 'cross-reference', 'relationships']):
+                analysis_patterns['complex_analysis'] += 1
+            
+            # Extract recommendations from content
+            if 'recommendation' in content or 'use' in content:
+                # Simple extraction - could be enhanced
+                lines = content.split('\n')
+                for line in lines:
+                    if ('use' in line or 'recommend' in line) and len(line) < 150:
+                        recommendations.append(line.strip())
+        
+        # Determine best tool
+        best_tool = max(tool_mentions.items(), key=lambda x: x[1])
+        best_analysis = max(analysis_patterns.items(), key=lambda x: x[1])
+        
+        # Calculate confidence
+        total_docs = len(documents)
+        confidence_level = "HIGH" if confidence_score > 3 else "MEDIUM" if confidence_score > 1 else "LOW"
+        
+        # Determine approach based on query patterns
+        approach = self._determine_approach(query_lower, best_analysis[0])
+        reasoning = self._generate_reasoning(query, best_tool[0], best_analysis[0])
+        
+        return {
+            'confidence': confidence_level,
+            'tool_recommendation': best_tool[0] if best_tool[1] > 0 else None,
+            'analysis_type': best_analysis[0],
+            'approach': approach,
+            'reasoning': reasoning,
+            'recommendations': recommendations[:3],  # Top 3 recommendations
+            'docs_analyzed': total_docs
+        }
+    
+    def _determine_approach(self, query_lower: str, analysis_type: str) -> str:
+        """Determine the best approach based on query analysis"""
+        
+        if any(word in query_lower for word in ['how many', 'list all', 'show me all', 'count']):
+            return "Device inventory and listing approach"
+        elif any(word in query_lower for word in ['configuration of', 'details for', 'show me', 'get info']):
+            return "Specific device configuration analysis"
+        elif any(word in query_lower for word in ['impact', 'happens if', 'connected to', 'depends on']):
+            return "Cross-system impact and dependency analysis"
+        else:
+            return f"Intelligent {analysis_type.replace('_', ' ')} approach"
+    
+    def _generate_reasoning(self, query: str, tool: str, analysis_type: str) -> str:
+        """Generate reasoning for tool recommendation"""
+        
+        if 'list_network_devices' in tool:
+            return "Query requests device inventory or counts - best served by listing tool"
+        elif 'get_device_details' in tool:
+            return "Query asks for specific device information - requires detailed configuration tool"
+        elif 'query_network_resources' in tool:
+            return "Query requires cross-system analysis or impact assessment - needs intelligent analysis"
+        else:
+            return f"Query pattern suggests {analysis_type.replace('_', ' ')} approach"
+    
+    def _default_guidance(self, query: str) -> Dict[str, Any]:
+        """Provide default guidance when RAG search fails"""
+        
+        query_lower = query.lower()
+        
+        # Simple pattern matching as fallback
+        if any(word in query_lower for word in ['how many', 'list', 'count', 'all']):
+            return {
+                'confidence': 'MEDIUM',
+                'tool_recommendation': 'list_network_devices',
+                'analysis_type': 'device_listing',
+                'approach': 'Device inventory approach (fallback)',
+                'reasoning': 'Query pattern suggests device listing',
+                'recommendations': ['Use list_network_devices for inventory queries'],
+                'docs_analyzed': 0
+            }
+        elif any(device in query_lower for device in ['olt17prop01', 'cinaalsa01', 'specific']):
+            return {
+                'confidence': 'MEDIUM', 
+                'tool_recommendation': 'get_device_details',
+                'analysis_type': 'device_details',
+                'approach': 'Specific device analysis (fallback)',
+                'reasoning': 'Query mentions specific device',
+                'recommendations': ['Use get_device_details for specific devices'],
+                'docs_analyzed': 0
+            }
+        else:
+            return {
+                'confidence': 'LOW',
+                'tool_recommendation': 'query_network_resources',
+                'analysis_type': 'complex_analysis',
+                'approach': 'General network analysis (fallback)',
+                'reasoning': 'Complex query requires intelligent analysis',
+                'recommendations': ['Use complex analysis for unclear queries'],
+                'docs_analyzed': 0
+            }
+
+    # =====================================
+    # GUIDED EXECUTION METHODS
+    # =====================================
+    
+    async def _execute_guided_device_listing(self, query: str, _guidance: Dict[str, Any]) -> List[str]:
+        """Execute device listing guided by RAG results"""
+        
+        # Extract parameters from guidance and query
+        device_type = "all"  # Default
+        filter_text = ""
+        
+        query_lower = query.lower()
+        
+        # Determine device type from query
+        if any(word in query_lower for word in ['ftth', 'olt']):
+            device_type = "ftth_olt"
+        elif 'lag' in query_lower:
+            device_type = "lag"
+        elif any(word in query_lower for word in ['mobile', 'modem']):
+            device_type = "mobile_modem"
+        elif 'team' in query_lower:
+            device_type = "team"
+        elif 'pxc' in query_lower:
+            device_type = "pxc"
+        
+        # Extract filter from specific device mentions
+        if 'cinaalsa01' in query_lower:
+            filter_text = "CINAALSA01"
+        elif 'hobo' in query_lower:
+            filter_text = "HOBO"
+        
+        # Call the list_network_devices logic directly and convert to list
+        result = await self._execute_list_network_devices({
+            'device_type': device_type,
+            'filter': filter_text,
+            'limit': 10
+        })
+        
+        return ["## RAG-Guided Device Listing\n", result]
+    
+    async def _execute_guided_device_details(self, query: str, _guidance: Dict[str, Any]) -> List[str]:
+        """Execute device details guided by RAG results"""
+        
+        # Extract device name from query
+        device_name = None
+        device_type = "ftth_olt"  # Default
+        
+        query_lower = query.lower()
+        
+        # Look for specific device names
+        if 'olt17prop01' in query_lower:
+            device_name = "OLT17PROP01"
+            device_type = "ftth_olt"
+        elif 'cinaalsa01' in query_lower:
+            device_name = "CINAALSA01" 
+            device_type = "lag"
+        elif 'mobile' in query_lower and any(serial in query_lower for serial in ['lpl', 'modem']):
+            # Would need to extract serial number
+            device_type = "mobile_modem"
+        
+        if device_name:
+            # Call the get_device_details logic directly and convert to list
+            result = await self._execute_get_device_details({
+                'device_name': device_name,
+                'device_type': device_type
+            })
+            return ["## RAG-Guided Device Details\n", result]
+        else:
+            return ["## Guided Analysis\nCould not identify specific device name in query. Please specify exact device name."]
+    
+    async def _execute_guided_complex_analysis(self, query: str, _guidance: Dict[str, Any]) -> List[str]:
+        """Execute complex analysis guided by RAG results"""
+        
+        # Use the original intelligent analysis but with RAG guidance
+        return await self._execute_original_analysis(query)
+    
+    async def _execute_original_analysis(self, query: str) -> List[str]:
+        """Execute the original analysis logic as fallback"""
+        
+        query_lower = query.lower()
+        
+        # Get network API adapter
+        network_adapter = self.query_controller.network_port
+        
+        # Fetch data
+        ftth_olts = await network_adapter.fetch_ftth_olts()
+        lag_data = await network_adapter._load_local_json('lag')
+        pxc_data = await network_adapter._load_local_json('pxc')
+        mobile_data = await network_adapter._load_local_json('mobile_modem')
+        team_data = await network_adapter._load_local_json('team')
+        
+        # Original analysis logic
+        if 'hobo' in query_lower and 'cinmecha01' in query_lower:
+            return await self._analyze_hobo_cinmecha_connectivity(ftth_olts, [])
+        elif 'cinaalsa01' in query_lower and 'lag' in query_lower:
+            return await self._analyze_lag_correlations(lag_data, ftth_olts, team_data)
+        elif 'nokia' in query_lower and 'mobile' in query_lower:
+            return await self._analyze_nokia_mobile_infrastructure(mobile_data, team_data)
+        else:
+            return await self._smart_device_listing(query_lower, ftth_olts, lag_data, pxc_data, mobile_data, team_data)
+
+    # =====================================
+    # INTELLIGENT ANALYSIS METHODS
+    # =====================================
+    
+    async def _analyze_hobo_cinmecha_connectivity(self, ftth_olts, response_parts):
+        """Analyze HOBO region OLTs connected to CINMECHA01"""
+        analysis_parts = ["## HOBO Region - CINMECHA01 Connectivity Analysis\n\n"]
+        
+        # Find HOBO region OLTs
+        hobo_olts = [olt for olt in ftth_olts if olt.region.upper() == 'HOBO']
+        cinmecha_connected = []
+        
+        for olt in hobo_olts:
+            # Check raw data for CINMECHA01 connections
+            olt_dict = olt.__dict__
+            if any('CINMECHA01' in str(v) for v in olt_dict.values() if v):
+                cinmecha_connected.append(olt)
+        
+        analysis_parts.append(f"**HOBO Region OLTs:** {len(hobo_olts)} found\n")
+        analysis_parts.append(f"**Connected to CINMECHA01:** {len(cinmecha_connected)}\n\n")
+        
+        if cinmecha_connected:
+            analysis_parts.append("### Connected FTTH OLTs:\n")
+            for olt in cinmecha_connected[:5]:
+                health = olt.get_health_summary()
+                analysis_parts.extend([
+                    f"🔗 **{health['name']}**\n",
+                    f"   - Environment: {health['environment']}\n",
+                    f"   - Managed by Inmanta: {'Yes' if health['managed_by_inmanta'] else 'No'}\n",
+                    f"   - Config Complete: {'Yes' if health['complete_config'] else 'No'}\n\n"
+                ])
+        
+        # Analyze redundancy
+        analysis_parts.append("### Redundancy Analysis:\n")
+        analysis_parts.append("- Single Point of Failure: CINMECHA01 node failure would impact connected OLTs\n")
+        analysis_parts.append("- Recommendation: Verify BNG master/slave configurations\n")
+        analysis_parts.append("- Critical: Review backup connectivity paths\n\n")
+        
+        return analysis_parts
+    
+    async def _analyze_lag_correlations(self, lag_data, ftth_olts, team_data):
+        """Analyze LAG configurations and FTTH correlations"""
+        analysis_parts = ["## CINAALSA01 LAG Analysis & FTTH Correlations\n\n"]
+        
+        # Filter LAGs for CINAALSA01
+        cinaalsa_lags = [lag for lag in lag_data if lag.get('device_name') == 'CINAALSA01']
+        
+        analysis_parts.append(f"**CINAALSA01 LAG Configurations:** {len(cinaalsa_lags)} found\n\n")
+        
+        if cinaalsa_lags:
+            analysis_parts.append("### LAG Details:\n")
+            for lag in cinaalsa_lags[:10]:
+                analysis_parts.extend([
+                    f"- **LAG {lag.get('lag_id')}**: {lag.get('description', 'No description')}\n",
+                    f"  Admin Key: {lag.get('admin_key', 'None')}\n"
+                ])
+            analysis_parts.append("\n")
+        
+        # Check for FTTH OLTs that might use these LAGs
+        analysis_parts.append("### FTTH Uplink Dependencies:\n")
+        dependent_olts = []
+        for olt in ftth_olts:
+            olt_dict = olt.__dict__
+            if any('CINAALSA01' in str(v) or 'LAG' in str(v) for v in olt_dict.values() if v):
+                dependent_olts.append(olt)
+        
+        if dependent_olts:
+            analysis_parts.append(f"**Potentially dependent FTTH OLTs:** {len(dependent_olts)}\n")
+            for olt in dependent_olts[:3]:
+                health = olt.get_health_summary()
+                analysis_parts.append(f"- {health['name']} ({health['environment']})\n")
+        else:
+            analysis_parts.append("No direct FTTH dependencies identified in current data.\n")
+        
+        # Team notification analysis
+        analysis_parts.append("\n### Team Notification Strategy:\n")
+        critical_teams = [team for team in team_data if team.get('team_name') in ['NAS', 'INFRA', 'IPOPS']]
+        if critical_teams:
+            analysis_parts.append("**Critical Teams to Notify:**\n")
+            for team in critical_teams:
+                analysis_parts.append(f"- {team.get('team_name')} (ID: {team.get('team_id')})\n")
+        
+        return analysis_parts
+    
+    async def _analyze_nokia_mobile_infrastructure(self, mobile_data, team_data):
+        """Analyze Nokia mobile modems and team assignments"""
+        analysis_parts = ["## Nokia Mobile Infrastructure Analysis\n\n"]
+        
+        # Filter Nokia devices
+        nokia_modems = [modem for modem in mobile_data if 'Nokia' in modem.get('hardware_type', '')]
+        
+        analysis_parts.append(f"**Nokia Mobile Modems:** {len(nokia_modems)} found\n\n")
+        
+        if nokia_modems:
+            analysis_parts.append("### Nokia Device Inventory:\n")
+            subscriber_map = {}
+            for modem in nokia_modems[:10]:
+                serial = modem.get('serial_number', 'Unknown')
+                subscriber = modem.get('mobile_subscriber_id', 'N/A')
+                analysis_parts.append(f"- **{serial}** → Subscriber: {subscriber}\n")
+                
+                # Track subscriber patterns
+                if subscriber != 'N/A':
+                    subscriber_map[subscriber] = subscriber_map.get(subscriber, 0) + 1
+            
+            analysis_parts.append("\n### Subscriber Mapping Analysis:\n")
+            for subscriber, count in subscriber_map.items():
+                analysis_parts.append(f"- {subscriber}: {count} modem(s)\n")
+        
+        # Team infrastructure analysis
+        analysis_parts.append("\n### Team Infrastructure Responsibilities:\n")
+        mobile_team = next((team for team in team_data if team.get('team_name') == 'MOBILE'), None)
+        if mobile_team:
+            analysis_parts.append(f"**Mobile Team:** {mobile_team.get('team_name')} (ID: {mobile_team.get('team_id')})\n")
+        
+        # Integration points analysis
+        analysis_parts.append("\n### Integration Points:\n")
+        analysis_parts.append("- VPN Services: Mobile modems use VPN subscriber IDs\n")
+        analysis_parts.append("- Network Convergence: Potential integration with FTTH for hybrid services\n")
+        analysis_parts.append("- Management Overlap: Consider unified device management platform\n")
+        
+        return analysis_parts
+    
+    async def _trace_network_path(self, ftth_olts, lag_data, pxc_data):
+        """Trace network path from specific OLT"""
+        analysis_parts = ["## Network Path Tracing: OLT17PROP01\n\n"]
+        
+        # Find the specific OLT
+        target_olt = next((olt for olt in ftth_olts if olt.name == 'OLT17PROP01'), None)
+        
+        if not target_olt:
+            analysis_parts.append("❌ OLT17PROP01 not found in FTTH data\n")
+            return analysis_parts
+        
+        health = target_olt.get_health_summary()
+        analysis_parts.extend([
+            f"**Source OLT:** {health['name']}\n",
+            f"**Environment:** {health['environment']}\n",
+            f"**Region:** {target_olt.region}\n\n"
+        ])
+        
+        # Analyze connectivity from raw OLT data
+        analysis_parts.append("### Network Path Analysis:\n")
+        olt_dict = target_olt.__dict__
+        
+        # Look for BNG connections
+        analysis_parts.append("**BNG Connectivity:**\n")
+        if hasattr(target_olt, 'service_configs') and target_olt.service_configs:
+            analysis_parts.append("- BNG nodes identified in service configuration\n")
+        else:
+            analysis_parts.append("- No BNG configuration found in current data\n")
+        
+        # Check for LAG connections
+        related_lags = [lag for lag in lag_data if 'OLT17PROP01' in str(lag)]
+        if related_lags:
+            analysis_parts.append(f"\n**LAG Connections:** {len(related_lags)} potential\n")
+        else:
+            analysis_parts.append("\n**LAG Connections:** None identified in current data\n")
+        
+        # Check PXC connections
+        hobo_pxcs = [pxc for pxc in pxc_data if 'HOBO' in pxc.get('device_name', '') or 'HOBO' in pxc.get('description', '')]
+        if hobo_pxcs:
+            analysis_parts.append(f"\n**PXC Cross-connects (HOBO region):** {len(hobo_pxcs)} found\n")
+            for pxc in hobo_pxcs[:3]:
+                analysis_parts.append(f"- {pxc.get('device_name')}: {pxc.get('description')}\n")
+        
+        # CINMECHA01 failure impact analysis
+        analysis_parts.append("\n### CINMECHA01 Failure Impact Analysis:\n")
+        analysis_parts.append("**Blast Radius Assessment:**\n")
+        analysis_parts.append("- Primary Impact: OLTs directly connected to CINMECHA01\n")
+        analysis_parts.append("- Secondary Impact: Services depending on affected OLTs\n")
+        analysis_parts.append("- Recovery Strategy: Failover to CINMECHB02 if configured\n")
+        
+        return analysis_parts
+    
+    async def _analyze_configuration_completeness(self, ftth_olts, lag_data, pxc_data):
+        """Analyze configuration completeness across devices"""
+        analysis_parts = ["## Configuration Completeness Analysis\n\n"]
+        
+        # Analyze FTTH OLT configurations
+        incomplete_olts = [olt for olt in ftth_olts if not olt.get_health_summary().get('complete_config')]
+        production_incomplete = [olt for olt in incomplete_olts if olt.is_production()]
+        test_incomplete = [olt for olt in incomplete_olts if not olt.is_production()]
+        
+        analysis_parts.extend([
+            f"**Total FTTH OLTs:** {len(ftth_olts)}\n",
+            f"**Incomplete Configurations:** {len(incomplete_olts)}\n",
+            f"**Production Impact:** {len(production_incomplete)} devices\n",
+            f"**Test Environment:** {len(test_incomplete)} devices\n\n"
+        ])
+        
+        # Priority analysis
+        analysis_parts.append("### Priority Classification:\n")
+        
+        if production_incomplete:
+            analysis_parts.append("🔴 **CRITICAL (Production):**\n")
+            for olt in production_incomplete[:5]:
+                health = olt.get_health_summary()
+                analysis_parts.append(f"- {health['name']}: Missing core configuration elements\n")
+        
+        if test_incomplete:
+            analysis_parts.append("\n🟡 **MEDIUM (Test Environment):**\n")
+            analysis_parts.append(f"- {len(test_incomplete)} test OLTs with incomplete configs\n")
+        
+        # Missing configuration elements analysis
+        analysis_parts.append("\n### Missing Configuration Elements:\n")
+        zero_bandwidth = [olt for olt in ftth_olts if olt.get_health_summary().get('bandwidth_gbps') == 0]
+        no_services = [olt for olt in ftth_olts if olt.get_health_summary().get('service_count') == 0]
+        
+        analysis_parts.extend([
+            f"- Bandwidth Configuration: {len(zero_bandwidth)} devices\n",
+            f"- Service Configuration: {len(no_services)} devices\n",
+            f"- Connection Type: Multiple devices missing connection specifications\n"
+        ])
+        
+        # Remediation timeline
+        analysis_parts.append("\n### Remediation Timeline:\n")
+        analysis_parts.append("**Week 1:** Address critical production configurations\n")
+        analysis_parts.append("**Week 2-3:** Complete test environment configurations\n")
+        analysis_parts.append("**Week 4:** Validation and monitoring setup\n")
+        
+        return analysis_parts
+    
+    async def _smart_device_listing(self, query_lower, ftth_olts, lag_data, pxc_data, mobile_data, team_data):
+        """Smart device listing based on query context"""
+        analysis_parts = ["## Smart Device Analysis\n\n"]
+        
+        # Query-based filtering
+        if 'status' in query_lower or 'health' in query_lower:
+            analysis_parts.append("### Device Health Status:\n")
+            for olt in ftth_olts[:5]:
+                health = olt.get_health_summary()
+                status = "🟢 Operational" if health['complete_config'] else "🟡 Needs Attention"
+                analysis_parts.append(f"- **{health['name']}**: {status} ({health['environment']})\n")
+        
+        elif 'all' in query_lower and 'device' in query_lower:
+            analysis_parts.extend([
+                f"### Infrastructure Summary:\n",
+                f"- FTTH OLTs: {len(ftth_olts)}\n",
+                f"- LAG Devices: {len(lag_data)}\n",
+                f"- PXC Cross-connects: {len(pxc_data)}\n",
+                f"- Mobile Modems: {len(mobile_data)}\n",
+                f"- Teams: {len(team_data)}\n\n"
+            ])
+        
+        else:
+            # Default intelligent summary
+            analysis_parts.append("### Network Overview:\n")
+            incomplete_count = len([olt for olt in ftth_olts if not olt.get_health_summary().get('complete_config')])
+            analysis_parts.extend([
+                f"**FTTH Infrastructure:** {len(ftth_olts)} OLTs ({incomplete_count} need configuration)\n",
+                f"**Switching Infrastructure:** {len(lag_data)} LAG configurations\n",
+                f"**Cross-connect Infrastructure:** {len(pxc_data)} PXC ports\n"
+            ])
+        
+        return analysis_parts
+    
+    async def _generate_smart_recommendations(self, query_lower, ftth_olts, lag_data, pxc_data, mobile_data):
+        """Generate context-aware recommendations"""
+        recommendations = []
+        
+        if 'redundancy' in query_lower or 'failure' in query_lower:
+            recommendations.extend([
+                "- Implement diverse routing for critical OLT connections\n",
+                "- Verify BNG failover mechanisms are properly configured\n",
+                "- Test disaster recovery procedures for CINMECHA01 failure scenarios\n"
+            ])
+        
+        elif 'configuration' in query_lower:
+            incomplete_count = len([olt for olt in ftth_olts if not olt.get_health_summary().get('complete_config')])
+            recommendations.extend([
+                f"- Prioritize completing configurations for {incomplete_count} FTTH OLTs\n",
+                "- Implement configuration management automation\n",
+                "- Establish configuration validation procedures\n"
+            ])
+        
+        elif 'team' in query_lower:
+            recommendations.extend([
+                "- Cross-train teams on mobile and FTTH infrastructure\n",
+                "- Establish clear escalation procedures\n",
+                "- Create unified monitoring dashboard for all infrastructure\n"
+            ])
+        
+        else:
+            # General recommendations
+            incomplete_count = len([olt for olt in ftth_olts if not olt.get_health_summary().get('complete_config')])
+            recommendations.extend([
+                f"- Address {incomplete_count} incomplete OLT configurations\n",
+                "- Implement comprehensive network monitoring\n",
+                "- Enhance documentation for network topology\n"
+            ])
+        
+        return recommendations
     
     # =====================================
     # UTILITY METHODS

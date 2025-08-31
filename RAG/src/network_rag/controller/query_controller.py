@@ -6,10 +6,11 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from ..models import (
-    QueryResult, ResultSource, SourceType, Message, MessageRole,
-    NetworkPort, VectorSearchPort, LLMPort, ConversationPort,
-    NetworkRAGException
+    QueryResult, SourceType, Message, MessageRole,
+    NetworkPort, VectorSearchPort, LLMPort, ConversationPort
 )
+from ..services.rag_fusion_analyzer import RAGFusionAnalyzer
+from ..services.response_formatter import ResponseFormatter
 
 
 class QueryController:
@@ -20,12 +21,18 @@ class QueryController:
         network_port: NetworkPort,
         vector_search_port: VectorSearchPort,
         llm_port: LLMPort,
-        conversation_port: ConversationPort
+        conversation_port: ConversationPort,
+        document_controller=None
     ):
         self.network_port = network_port
         self.vector_search_port = vector_search_port
         self.llm_port = llm_port
         self.conversation_port = conversation_port
+        
+        # RAG fusion services (initialized later via dependency injection)
+        self.rag_analyzer = None
+        self.response_formatter = ResponseFormatter()
+        self._document_controller = document_controller
     
     async def process_query(
         self,
@@ -662,3 +669,333 @@ When provided with network data, analyze it for:
         result.add_limitation("Query processing failed due to technical error")
         
         return result
+    
+    # =====================================
+    # RAG FUSION & INTELLIGENT QUERY METHODS
+    # =====================================
+    
+    def initialize_rag_analyzer(self, document_controller, context_builder=None):
+        """Initialize RAG fusion analyzer with optional schema-aware context (called by dependency injection)"""
+        self.rag_analyzer = RAGFusionAnalyzer(document_controller, context_builder)
+        self._document_controller = document_controller
+    
+    async def execute_intelligent_network_query(self, arguments: Dict[str, Any]) -> str:
+        """
+        Main entry point for RAG-enhanced intelligent network queries with schema awareness.
+        This is where RAG fusion belongs - in the business logic layer!
+        """
+        query = arguments.get("query", "")
+        include_recommendations = arguments.get("include_recommendations", True)
+        
+        # Step 1: Use enhanced RAG fusion with data awareness
+        if self.rag_analyzer:
+            # Try schema-aware analysis first
+            if hasattr(self.rag_analyzer, 'analyze_query_with_data_awareness'):
+                guidance, schema_context = await self.rag_analyzer.analyze_query_with_data_awareness(query)
+            else:
+                guidance = await self.rag_analyzer.analyze_query_for_tool_selection(query)
+                schema_context = None
+        else:
+            guidance = self._fallback_tool_guidance(query)
+            schema_context = None
+        
+        # Step 2: Execute based on RAG guidance with schema context
+        response_parts = [
+            "# Schema-Aware Network Analysis\n",
+            f"**Query:** {query}\n\n"
+        ]
+        
+        # Add schema context information if available
+        if schema_context:
+            response_parts.append(self._format_schema_context_summary(schema_context))
+        
+        # Add RAG guidance information
+        if guidance.get('docs_analyzed', 0) > 0:
+            response_parts.extend(self.response_formatter.format_rag_guidance(guidance))
+        
+        # Step 3: Execute the recommended tool strategy with schema context
+        try:
+            if guidance['analysis_type'] == 'device_listing':
+                result = await self._execute_device_listing_strategy(query, guidance, schema_context)
+            elif guidance['analysis_type'] == 'device_details':
+                result = await self._execute_device_details_strategy(query, guidance, schema_context)
+            else:
+                result = await self._execute_complex_analysis_strategy(query, guidance, schema_context)
+            
+            response_parts.append(result)
+            
+        except Exception as e:
+            error_response = self.response_formatter.format_error_response(
+                "Analysis Error",
+                f"Failed to execute analysis: {str(e)}",
+                ["Try a more specific query", "Check device names for typos"]
+            )
+            response_parts.append(error_response)
+        
+        # Step 4: Add knowledge-based recommendations
+        if include_recommendations and guidance.get('recommendations'):
+            response_parts.extend([
+                "\n## Knowledge-Based Recommendations\n"
+            ])
+            for rec in guidance['recommendations']:
+                response_parts.append(f"💡 {rec}\n")
+        
+        return "".join(response_parts)
+    
+    def _fallback_tool_guidance(self, query: str) -> Dict[str, Any]:
+        """Provide tool guidance when RAG analyzer is not available"""
+        
+        query_lower = query.lower()
+        
+        if any(word in query_lower for word in ['how many', 'list', 'count', 'all']):
+            return {
+                'confidence': 'MEDIUM',
+                'tool_recommendation': 'list_network_devices',
+                'analysis_type': 'device_listing',
+                'approach': 'Device inventory approach (fallback)',
+                'reasoning': 'Query pattern suggests device listing',
+                'recommendations': ['Use list_network_devices for inventory queries'],
+                'docs_analyzed': 0
+            }
+        elif any(device in query_lower for device in ['olt17prop01', 'cinaalsa01', 'specific']):
+            return {
+                'confidence': 'MEDIUM', 
+                'tool_recommendation': 'get_device_details',
+                'analysis_type': 'device_details',
+                'approach': 'Specific device analysis (fallback)',
+                'reasoning': 'Query mentions specific device',
+                'recommendations': ['Use get_device_details for specific devices'],
+                'docs_analyzed': 0
+            }
+        else:
+            return {
+                'confidence': 'LOW',
+                'tool_recommendation': 'query_network_resources',
+                'analysis_type': 'complex_analysis',
+                'approach': 'General network analysis (fallback)',
+                'reasoning': 'Complex query requires intelligent analysis',
+                'recommendations': ['Use complex analysis for unclear queries'],
+                'docs_analyzed': 0
+            }
+    
+    def _determine_device_type_from_query(self, query: str) -> str:
+        """Determine device type from query content"""
+        query_lower = query.lower()
+        
+        if any(word in query_lower for word in ['ftth', 'olt']):
+            return "ftth_olt"
+        elif 'lag' in query_lower:
+            return "lag"
+        elif any(word in query_lower for word in ['mobile', 'modem']):
+            return "mobile_modem"
+        elif 'team' in query_lower:
+            return "team"
+        elif 'pxc' in query_lower:
+            return "pxc"
+        else:
+            return "ftth_olt"  # Default
+    
+    def _extract_filters_from_query(self, query: str) -> Dict[str, str]:
+        """Extract filter criteria from query"""
+        query_lower = query.lower()
+        filters = {}
+        
+        if 'cinaalsa01' in query_lower:
+            filters['filter_text'] = 'CINAALSA01'
+        elif 'hobo' in query_lower:
+            filters['filter_text'] = 'HOBO'
+        
+        return filters
+    
+    def _extract_device_name_from_query(self, query: str) -> Optional[str]:
+        """Extract specific device name from query"""
+        query_lower = query.lower()
+        
+        if 'olt17prop01' in query_lower:
+            return 'OLT17PROP01'
+        elif 'cinaalsa01' in query_lower:
+            return 'CINAALSA01'
+        
+        # Look for OLT pattern: OLT[numbers][letters][numbers]
+        import re
+        olt_match = re.search(r'\b(olt\d+[a-z]+\d+)\b', query_lower)
+        if olt_match:
+            return olt_match.group(1).upper()
+        
+        return None
+    
+    def _format_schema_context_summary(self, schema_context) -> str:
+        """Format schema context for LLM consumption"""
+        if not schema_context:
+            return ""
+        
+        parts = ["## 📊 Data Context\n\n"]
+        
+        # Data availability summary
+        if schema_context.data_samples:
+            total_records = sum(sample.total_count for sample in schema_context.data_samples.values())
+            parts.append(f"**Available Data:** {total_records:,} records across {len(schema_context.data_samples)} data sources\n\n")
+            
+            # Data quality overview
+            if schema_context.quality_metrics:
+                quality_summary = []
+                for schema_name, metrics in schema_context.quality_metrics.items():
+                    status = "🟢 Good" if metrics.overall_score >= 0.7 else "🟡 Fair" if metrics.overall_score >= 0.5 else "🔴 Poor"
+                    quality_summary.append(f"- **{schema_name}:** {status} ({metrics.overall_score:.1%})")
+                
+                if quality_summary:
+                    parts.append("**Data Quality:**\n")
+                    parts.extend([f"{item}\n" for item in quality_summary])
+                    parts.append("\n")
+        
+        # Schema information
+        if schema_context.relevant_schemas:
+            schema_names = [schema.name for schema in schema_context.relevant_schemas]
+            parts.append(f"**Relevant Schemas:** {', '.join(schema_names)}\n\n")
+        
+        # Data-aware recommendations
+        if schema_context.recommendations:
+            parts.append("**Data Recommendations:**\n")
+            for rec in schema_context.recommendations[:3]:
+                parts.append(f"💡 {rec}\n")
+            parts.append("\n")
+        
+        return "".join(parts)
+    
+    async def _execute_device_listing_strategy(self, query: str, guidance: Dict[str, Any], schema_context=None) -> str:
+        """Execute device listing strategy with optional schema context"""
+        return await self._execute_original_device_listing_strategy(query, guidance)
+    
+    async def _execute_device_details_strategy(self, query: str, guidance: Dict[str, Any], schema_context=None) -> str:
+        """Execute device details strategy with optional schema context"""
+        return await self._execute_original_device_details_strategy(query, guidance)
+    
+    async def _execute_complex_analysis_strategy(self, query: str, guidance: Dict[str, Any], schema_context=None) -> str:
+        """Execute complex analysis strategy with optional schema context"""
+        return await self._execute_original_complex_analysis_strategy(query, guidance)
+    
+    async def _execute_original_device_listing_strategy(self, query: str, guidance: Dict[str, Any]) -> str:
+        """Original device listing implementation"""
+        device_type = self._determine_device_type_from_query(query)
+        filters = self._extract_filters_from_query(query)
+        
+        try:
+            if device_type == "ftth_olt":
+                devices = await self.network_port.fetch_ftth_olts()
+                return self.response_formatter.format_device_list(devices, "FTTH OLT", filters)
+            else:
+                # Load from JSON files for other types
+                devices = await self.network_port._load_local_json(device_type)
+                return self.response_formatter.format_json_device_list(devices, device_type.upper(), filters)
+                
+        except Exception as e:
+            return self.response_formatter.format_error_response(
+                "Device Listing Error",
+                f"Could not retrieve {device_type} devices: {str(e)}",
+                ["Check your network connection", "Verify device type is supported"]
+            )
+    
+    async def _execute_original_device_details_strategy(self, query: str, guidance: Dict[str, Any]) -> str:
+        """Original device details implementation"""
+        device_name = self._extract_device_name_from_query(query)
+        
+        if not device_name:
+            return self.response_formatter.format_error_response(
+                "Device Not Found",
+                "Could not identify specific device from query",
+                ["Include specific device name", "Use format like 'OLT17PROP01'"]
+            )
+        
+        try:
+            if 'OLT' in device_name.upper():
+                devices = await self.network_port.fetch_ftth_olts()
+                device = next((d for d in devices if d.name == device_name), None)
+                
+                if device:
+                    return self.response_formatter.format_device_details(device)
+                else:
+                    return self.response_formatter.format_error_response(
+                        "Device Not Found", 
+                        f"No device found with name '{device_name}'",
+                        ["Check device name spelling", "Try listing all devices first"]
+                    )
+            else:
+                # Handle non-OLT devices
+                return f"## Device Details\n\nDevice lookup for '{device_name}' is not yet implemented for non-OLT devices."
+                
+        except Exception as e:
+            return self.response_formatter.format_error_response(
+                "Device Details Error",
+                f"Could not retrieve details for {device_name}: {str(e)}",
+                ["Check device name is correct", "Ensure network connectivity"]
+            )
+    
+    async def _execute_original_complex_analysis_strategy(self, query: str, guidance: Dict[str, Any]) -> str:
+        """Original complex analysis implementation"""
+        try:
+            # Multi-source analysis approach
+            results = []
+            
+            # Try to get both network data and knowledge base info
+            device_type = self._determine_device_type_from_query(query)
+            
+            if device_type == "ftth_olt":
+                devices = await self.network_port.fetch_ftth_olts()
+                if devices:
+                    analysis_summary = self._generate_complex_analysis(devices, query)
+                    results.append(analysis_summary)
+            
+            # Add knowledge base context if available
+            if self._document_controller:
+                try:
+                    docs = await self._document_controller.search_documents(query, limit=3)
+                    if docs:
+                        kb_context = "\n\n### Related Documentation\n"
+                        for doc in docs[:2]:
+                            kb_context += f"- **{doc.title}**: {doc.get_content_preview(100)}...\n"
+                        results.append(kb_context)
+                except Exception:
+                    pass  # Don't fail complex analysis if knowledge base fails
+            
+            if results:
+                return "\n".join(results)
+            else:
+                return "## Analysis Result\n\nNo specific data found for complex analysis. Please try a more specific query."
+                
+        except Exception as e:
+            return self.response_formatter.format_error_response(
+                "Complex Analysis Error",
+                f"Analysis failed: {str(e)}",
+                ["Try a simpler query first", "Check for typos in device names"]
+            )
+    
+    def _generate_complex_analysis(self, devices, query: str) -> str:
+        """Generate complex analysis summary from devices"""
+        if not devices:
+            return "## Analysis Result\n\nNo devices found for analysis."
+        
+        # Basic analysis
+        total_devices = len(devices)
+        production_count = sum(1 for device in devices if device.is_production())
+        regions = set(device.region for device in devices if hasattr(device, 'region'))
+        
+        analysis_parts = [
+            "## Complex Analysis Summary\n",
+            f"**Total Devices:** {total_devices}\n",
+            f"**Production:** {production_count} ({production_count/total_devices:.1%})\n"
+        ]
+        
+        if regions:
+            analysis_parts.append(f"**Regions:** {', '.join(sorted(regions))}\n")
+        
+        # Query-specific insights
+        query_lower = query.lower()
+        if 'bandwidth' in query_lower or 'capacity' in query_lower:
+            total_bandwidth = sum(device.calculate_bandwidth_gbps() for device in devices)
+            analysis_parts.append(f"**Total Bandwidth:** {total_bandwidth:.1f} Gbps\n")
+        
+        if 'health' in query_lower or 'status' in query_lower:
+            healthy_count = sum(1 for device in devices if device.has_complete_config())
+            analysis_parts.append(f"**Healthy Devices:** {healthy_count}/{total_devices} ({healthy_count/total_devices:.1%})\n")
+        
+        return "".join(analysis_parts)

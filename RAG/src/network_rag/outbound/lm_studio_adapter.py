@@ -280,7 +280,11 @@ Summary:"""
 
 Keywords:"""
         
-        messages = [Message(role="user", content=prompt)]
+        messages = [Message(
+            id=f"extract_keywords_{int(datetime.utcnow().timestamp())}_{hash(prompt[:50]) % 10000}",
+            role="user", 
+            content=prompt
+        )]
         
         try:
             response = await self.generate_response(

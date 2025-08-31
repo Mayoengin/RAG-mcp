@@ -295,7 +295,7 @@ class MongoDBAdapter(KnowledgePort, VectorSearchPort, ConversationPort):
                 "_id": document.id,
                 "document_id": document.id,
                 "title": document.title,
-                "document_type": document.document_type.value,
+                "document_type": document.document_type.value if hasattr(document.document_type, 'value') else str(document.document_type),
                 "embedding": embedding,
                 "keywords": document.keywords,
                 "created_at": document.created_at,
