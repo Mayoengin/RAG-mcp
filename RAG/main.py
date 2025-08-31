@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Network RAG System - Main Entry Point
-Demonstrates Schema-Aware RAG system with two core scenarios
+Demonstrates RAG system with network data integration and basic schema awareness
 """
 
 import asyncio
@@ -29,7 +29,7 @@ from network_rag.outbound.llama_adapter import LlamaAdapter
 
 
 class NetworkRAGDemo:
-    """Demo class to showcase the Schema-Aware RAG system"""
+    """Demo class to showcase the Network RAG system"""
     
     def __init__(self):
         self.server: Optional[MCPServerAdapter] = None
@@ -37,8 +37,8 @@ class NetworkRAGDemo:
         self.document_controller: Optional[DocumentController] = None
         
     async def initialize(self, use_mock_data: bool = True):
-        """Initialize the complete RAG system"""
-        print("🚀 Initializing Schema-Aware Network RAG System...")
+        """Initialize the Network RAG system"""
+        print("🚀 Initializing Network RAG System...")
         
         try:
             # Initialize adapters
@@ -102,7 +102,7 @@ class NetworkRAGDemo:
                 document_controller=self.document_controller
             )
             
-            # Initialize RAG analyzer with schema awareness
+            # Initialize RAG analyzer with basic schema awareness
             self.query_controller.initialize_rag_analyzer(
                 self.document_controller, 
                 context_builder
@@ -395,9 +395,9 @@ class NetworkRAGDemo:
         return mock_llm
     
     async def run_demo_scenarios(self):
-        """Run comprehensive demo scenarios"""
+        """Run demo scenarios"""
         print("\n" + "="*60)
-        print("🎯 SCHEMA-AWARE RAG SYSTEM DEMONSTRATION")
+        print("🎯 NETWORK RAG SYSTEM DEMONSTRATION")
         print("="*60)
         
         # Test scenarios - Core functionality demonstration
@@ -405,12 +405,12 @@ class NetworkRAGDemo:
             {
                 "name": "Regional Device Inventory",
                 "query": "How many FTTH OLTs are in HOBO region?",
-                "description": "Tests schema-aware device listing with regional filtering"
+                "description": "Tests device listing with regional filtering"
             },
             {
-                "name": "Configuration Issue Analysis", 
+                "name": "Device Configuration Analysis", 
                 "query": "Show me FTTH OLTs in HOBO region with configuration issues",
-                "description": "Tests data quality assessment and issue detection"
+                "description": "Tests device analysis and issue detection"
             }
         ]
         
@@ -478,9 +478,9 @@ class NetworkRAGDemo:
         print("="*60)
         
         scenario = {
-            "name": "Schema-Aware Regional Analysis",
+            "name": "Regional Network Analysis",
             "query": "Show me all the FTTH OLTs in GENT region",
-            "description": "Demonstrates schema-aware context with live data quality assessment"
+            "description": "Demonstrates network data retrieval with regional filtering"
         }
         
         print(f"\n🔍 {scenario['name']}")
@@ -506,127 +506,61 @@ class NetworkRAGDemo:
             traceback.print_exc()
     
     def print_system_overview(self):
-        """Print system architecture overview"""
-        print("\n" + "="*70)
-        print("🏗️ SCHEMA-AWARE RAG SYSTEM ARCHITECTURE")
-        print("="*70)
+        """Print accurate system overview"""
+        print("\n" + "="*60)
+        print("🏗️ NETWORK RAG SYSTEM - CURRENT IMPLEMENTATION")
+        print("="*60)
         
-        architecture = """
-╔═══════════════════════════════════════════════════════════════════════════════════╗
-║                          🎯 SCHEMA-AWARE RAG SYSTEM ARCHITECTURE                  ║
-╠═══════════════════════════════════════════════════════════════════════════════════╣
-║                                                                                   ║
-║  ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────────────┐  ║
-║  │   🌐 USER       │───▶│  📡 MCP SERVER   │───▶│  🎮 QUERY CONTROLLER       │  ║
-║  │   INTERFACE     │    │  • Tool routing  │    │  • Business logic          │  ║
-║  │   • CLI/API     │    │  • Protocol mgmt │    │  • Multi-source fusion     │  ║
-║  └─────────────────┘    └──────────────────┘    └─────────────────────────────┘  ║
-║                                                                │                  ║
-║                                                                ▼                  ║
-║  ┌─────────────────────────────────────────────────────────────────────────────┐  ║
-║  │                    🧠 ENHANCED RAG FUSION ANALYZER                         │  ║
-║  │  • Query intent analysis     • Schema-aware context building              │  ║
-║  │  • Tool selection strategy   • Data quality assessment                    │  ║
-║  │  • Document retrieval        • Multi-source data fusion                   │  ║
-║  └─────────────────────────────────────────────────────────────────────────────┘  ║
-║                              │               │               │                    ║
-║        ┌─────────────────────┼───────────────┼───────────────┼─────────────────┐  ║
-║        │                     │               │               │                 │  ║
-║        ▼                     ▼               ▼               ▼                 ▼  ║
-║  ┌──────────┐  ┌──────────────────┐  ┌─────────────┐  ┌─────────────┐  ┌──────────┐ ║
-║  │📚 VECTOR │  │🗃️  KNOWLEDGE     │  │🧬 SCHEMA    │  │🌐 NETWORK   │  │💾 DATA   │ ║
-║  │EMBEDDINGS│  │   DATABASE       │  │ REGISTRY    │  │   APIS      │  │QUALITY   │ ║
-║  │          │  │                  │  │             │  │             │  │SERVICE   │ ║
-║  │• Semantic│  │• Config guides   │  │• Data types │  │• FTTH OLTs  │  │• Health  │ ║
-║  │  search  │  │• Troubleshooting │  │• Validation │  │• Real-time  │  │  checks  │ ║
-║  │• Document│  │• Best practices  │  │• Schemas    │  │  status     │  │• Quality │ ║
-║  │  ranking │  │• API references  │  │• Context    │  │• Filtering  │  │  scores  │ ║
-║  │• Similarity│ │• Network docs   │  │  builders   │  │• JSON data  │  │• Metrics │ ║
-║  └──────────┘  └──────────────────┘  └─────────────┘  └─────────────┘  └──────────┘ ║
-║        │                     │               │               │                 │  ║
-║        └─────────────────────┼───────────────┼───────────────┼─────────────────┘  ║
-║                              │               │               │                    ║
-║                              ▼               ▼               ▼                    ║
-║  ┌─────────────────────────────────────────────────────────────────────────────┐  ║
-║  │                    🎯 INTELLIGENT CONTEXT BUILDER                          │  ║
-║  │                                                                             │  ║
-║  │  📊 Data Context:           🧠 Schema Context:         📚 Knowledge Context: │  ║
-║  │  • Live FTTH OLT data      • Field definitions       • Relevant documents   │  ║
-║  │  • Regional filtering      • Data relationships      • Configuration guides │  ║
-║  │  • Quality metrics         • Validation rules        • Best practices       │  ║
-║  │  • Real-time status        • Type constraints        • Troubleshooting tips │  ║
-║  └─────────────────────────────────────────────────────────────────────────────┘  ║
-║                                           │                                       ║
-║                                           ▼                                       ║
-║  ┌─────────────────────────────────────────────────────────────────────────────┐  ║
-║  │                      🤖 LARGE LANGUAGE MODEL                               │  ║
-║  │                                                                             │  ║
-║  │  Input: Rich Context = Live Data + Schema Info + Knowledge Base            │  ║
-║  │  ┌─────────────────────────────────────────────────────────────────────┐   │  ║
-║  │  │ SYSTEM PROMPT: "You are a network infrastructure analyst..."        │   │  ║
-║  │  │ USER CONTEXT:                                                       │   │  ║
-║  │  │ • Query: "Show me FTTH OLTs in GENT region"                        │   │  ║
-║  │  │ • 5 devices found: OLT17LEUV01, OLT70NIKL01, etc.                 │   │  ║
-║  │  │ • Device details: regions, environments, configurations             │   │  ║
-║  │  │ • Schema: FTTH OLT data structure and validation rules             │   │  ║
-║  │  │ • Knowledge: Network configuration best practices                   │   │  ║
-║  │  └─────────────────────────────────────────────────────────────────────┘   │  ║
-║  │                                   ▼                                         │  ║
-║  │  Output: Intelligent Analysis with Insights & Recommendations              │  ║
-║  └─────────────────────────────────────────────────────────────────────────────┘  ║
-║                                           │                                       ║
-║                                           ▼                                       ║
-║  ┌─────────────────────────────────────────────────────────────────────────────┐  ║
-║  │                     ✨ INTELLIGENT RESPONSE                                 │  ║
-║  │                                                                             │  ║
-║  │  🎯 Analysis: "Found 5 FTTH OLTs in GENT region"                          │  ║
-║  │  🔍 Insights: "4 production, 1 UAT - mature deployment"                   │  ║
-║  │  📊 Details: Device-by-device breakdown with status                        │  ║
-║  │  🛠️  Recommendations: "Consider promoting UAT to production"               │  ║
-║  │  ⚡ Powered by: Live data + Schema awareness + Domain knowledge           │  ║
-║  └─────────────────────────────────────────────────────────────────────────────┘  ║
-║                                                                                   ║
-╚═══════════════════════════════════════════════════════════════════════════════════╝
-        """
+        print("\n📋 ACTUAL SYSTEM FLOW:")
+        print("┌─────────────────────────────────────────────────────────────────┐")
+        print("│  1. 🌐 User Query → MCP Server                                 │")
+        print("│  2. 📡 MCP Server → Query Controller                           │")
+        print("│  3. 🧠 Query Controller → RAG Fusion Analyzer                  │")
+        print("│  4. 🔍 RAG Analyzer → Schema Registry (intent analysis)        │")
+        print("│  5. 📊 Schema Context Builder (basic context)                  │")
+        print("│  6. 🌐 Network API Adapter → Live FTTH OLT data               │")
+        print("│  7. 🗃️  Knowledge Base → Mock document search                   │")
+        print("│  8. 🤖 LLM → Intelligent analysis with context                 │")
+        print("│  9. ✨ Formatted response with recommendations                  │")
+        print("└─────────────────────────────────────────────────────────────────┘")
         
-        print(architecture)
+        print("\n🎯 IMPLEMENTED FEATURES:")
+        print("┌─────────────────────────────────────────────────────────────────┐")
+        print("│  ✅ QUERY INTELLIGENCE                                         │")
+        print("│    • Query intent analysis and tool selection                  │")
+        print("│    • RAG fusion with document retrieval                        │")
+        print("│    • Fallback logic for unknown queries                        │")
+        print("│                                                                 │")
+        print("│  ✅ SCHEMA AWARENESS                                            │")
+        print("│    • Comprehensive network data schemas                        │")
+        print("│    • Query-to-schema mapping                                   │")
+        print("│    • Basic validation and context building                     │")
+        print("│                                                                 │")
+        print("│  ✅ LIVE NETWORK INTEGRATION                                    │")
+        print("│    • Real FTTH OLT data retrieval                             │")
+        print("│    • Regional filtering (HOBO, GENT, ROES, ASSE)              │")
+        print("│    • Environment awareness (Production, UAT, Test)             │")
+        print("│    • Inmanta management status tracking                        │")
+        print("│                                                                 │")
+        print("│  ✅ LLM INTEGRATION                                             │")
+        print("│    • LM Studio integration for intelligent responses           │")
+        print("│    • Mock LLM fallback for demos                              │")
+        print("│    • Context-aware prompting                                   │")
+        print("└─────────────────────────────────────────────────────────────────┘")
         
-        print("\n🎯 KEY INNOVATIONS & CAPABILITIES:")
-        print("┌─────────────────────────────────────────────────────────────────────┐")
-        print("│  🧠 SCHEMA-AWARE RAG FUSION                                         │")
-        print("│  ✅ LLM receives structured data + schema context + domain knowledge│")
-        print("│  ✅ Multi-source intelligence: Vector DB + Live APIs + Schemas     │")
-        print("│  ✅ Query intent analysis drives intelligent tool selection        │")
-        print("│                                                                     │")
-        print("│  🌐 REAL-TIME NETWORK INTEGRATION                                  │")
-        print("│  ✅ Live FTTH OLT data from network APIs and JSON sources          │")
-        print("│  ✅ Regional filtering (GENT, HOBO, ROES, ASSE regions)            │")
-        print("│  ✅ Environment-aware (Production, UAT, Test environments)         │")
-        print("│  ✅ Inmanta configuration management integration                    │")
-        print("│                                                                     │")
-        print("│  📊 DATA QUALITY & HEALTH ASSESSMENT                               │")
-        print("│  ✅ Automatic data completeness and freshness scoring              │")
-        print("│  ✅ Schema validation and constraint checking                       │")
-        print("│  ✅ Real-time network device health monitoring                     │")
-        print("│                                                                     │")
-        print("│  🎯 INTELLIGENT ANALYSIS & RECOMMENDATIONS                         │")
-        print("│  ✅ Context-aware insights (production vs UAT analysis)            │")
-        print("│  ✅ Network topology understanding and pattern recognition         │")
-        print("│  ✅ Actionable recommendations based on operational context        │")
-        print("│  ✅ Multi-dimensional analysis: technical + business intelligence  │")
-        print("│                                                                     │")
-        print("│  🏗️ PRODUCTION-READY ARCHITECTURE                                  │")
-        print("│  ✅ Clean separation: Controllers, Services, Adapters, Models      │")
-        print("│  ✅ Comprehensive error handling and graceful degradation          │")
-        print("│  ✅ MCP protocol integration for tool-based AI interactions       │")
-        print("│  ✅ Scalable design supporting multiple data sources & LLM models  │")
-        print("└─────────────────────────────────────────────────────────────────────┘")
+        print("\n⚠️  SIMPLIFIED/MOCK COMPONENTS:")
+        print("┌─────────────────────────────────────────────────────────────────┐")
+        print("│  📊 Data Quality Assessment: Basic mock implementation         │")
+        print("│  🔍 Vector Search: Mock similarity scoring                     │")
+        print("│  📚 Knowledge Base: Sample documents only                      │")
+        print("│  💾 Database: Mock MongoDB adapter                             │")
+        print("└─────────────────────────────────────────────────────────────────┘")
 
 
 async def main():
     """Main entry point"""
-    print("🚀 Network RAG System - Schema-Aware Demonstration")
-    print("=" * 55)
+    print("🚀 Network RAG System - Demonstration")
+    print("=" * 40)
     
     demo = NetworkRAGDemo()
     
@@ -665,8 +599,8 @@ async def main():
     except Exception as e:
         print(f"\n❌ Demo error: {e}")
     
-    print("\n🎯 Schema-Aware RAG System demonstration completed!")
-    print("📋 Review the generated documentation files for full system details.")
+    print("\n🎯 Network RAG System demonstration completed!")
+    print("📋 Review the system implementation for technical details.")
 
 
 if __name__ == "__main__":
