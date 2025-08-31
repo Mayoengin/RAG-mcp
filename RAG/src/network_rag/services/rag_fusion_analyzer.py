@@ -283,64 +283,39 @@ class RAGFusionAnalyzer:
         
         # Add schema context summary
         enhanced_guidance['available_schemas'] = [schema.name for schema in schema_context.relevant_schemas]
-        enhanced_guidance['data_quality_summary'] = {
-            schema_name: f"{metrics.overall_score:.1%}" 
-            for schema_name, metrics in schema_context.quality_metrics.items()
-        }
+        enhanced_guidance['data_quality_summary'] = "Basic schema validation available"
         enhanced_guidance['total_records_available'] = sum(
-            sample.total_count for sample in schema_context.data_samples.values()
+            sample.get('total_count', 0) for sample in schema_context.data_samples.values()
         )
         
         return enhanced_guidance
     
     def _assess_data_health_for_query(self, schema_context: SchemaAwareContext) -> str:
-        """Assess overall data health relevant to the query"""
+        """Assess overall data health relevant to the query (simplified)"""
         
-        if not schema_context.quality_metrics:
-            return 'unknown'
-        
-        # Calculate weighted average based on data volume
-        total_weight = 0
-        weighted_score = 0
-        
-        for schema_name, metrics in schema_context.quality_metrics.items():
-            # Weight by record count (more data = higher weight)
-            weight = max(1, metrics.record_count / 100)  # Normalize weight
-            weighted_score += metrics.overall_score * weight
-            total_weight += weight
-        
-        if total_weight == 0:
+        # Simplified assessment based on data availability
+        if not schema_context.data_samples:
             return 'poor'
         
-        avg_score = weighted_score / total_weight
+        # Basic health assessment based on data samples
+        total_records = sum(
+            sample.get('total_count', 0) for sample in schema_context.data_samples.values()
+        )
         
-        if avg_score >= 0.9:
-            return 'excellent'
-        elif avg_score >= 0.7:
+        if total_records > 5:
             return 'good'
-        elif avg_score >= 0.5:
+        elif total_records > 0:
             return 'fair'
         else:
             return 'poor'
     
     def _adjust_tool_for_data_context(self, tool: str, schema_context: SchemaAwareContext) -> str:
-        """Adjust tool recommendation based on data context"""
-        
-        # If data quality is poor, prefer simpler tools
-        poor_quality_schemas = [
-            name for name, metrics in schema_context.quality_metrics.items()
-            if metrics.overall_score < 0.5
-        ]
-        
-        if poor_quality_schemas:
-            # Prefer get_device_details for specific queries when data quality is poor
-            if tool == 'query_network_resources' and len(schema_context.relevant_schemas) == 1:
-                return 'get_device_details'
+        """Adjust tool recommendation based on data context (simplified)"""
         
         # If no data available, switch to knowledge search
         empty_schemas = [
             name for name, sample in schema_context.data_samples.items()
-            if sample.total_count == 0
+            if sample.get('total_count', 0) == 0
         ]
         
         if len(empty_schemas) == len(schema_context.data_samples):
@@ -350,38 +325,33 @@ class RAGFusionAnalyzer:
         return tool  # No adjustment needed
     
     def _generate_data_aware_recommendations(self, schema_context: SchemaAwareContext) -> List[str]:
-        """Generate recommendations based on data context"""
+        """Generate recommendations based on data context (simplified)"""
         
         recommendations = []
         
-        # Data quality recommendations
-        poor_quality = [
-            name for name, metrics in schema_context.quality_metrics.items()
-            if metrics.overall_score < 0.6
-        ]
+        # Basic data availability recommendations
+        if schema_context.data_samples:
+            total_records = sum(
+                sample.get('total_count', 0) for sample in schema_context.data_samples.values()
+            )
+            
+            if total_records > 0:
+                recommendations.append("Data samples available for analysis.")
+            else:
+                recommendations.append("Limited data available. Consider checking data sources.")
+            
+            # Large dataset recommendations
+            large_datasets = [
+                name for name, sample in schema_context.data_samples.items()
+                if sample.get('total_count', 0) > 100
+            ]
+            
+            if large_datasets:
+                recommendations.append(f"Large datasets detected in {', '.join(large_datasets)}. Use filters for better performance.")
+        else:
+            recommendations.append("No data samples available. Verify data source connectivity.")
         
-        if poor_quality:
-            recommendations.append(f"Data quality concerns detected in {', '.join(poor_quality)}. Verify results carefully.")
-        
-        # Data freshness recommendations
-        stale_data = [
-            name for name, metrics in schema_context.quality_metrics.items()
-            if metrics.freshness_score < 0.7
-        ]
-        
-        if stale_data:
-            recommendations.append(f"Data freshness issues in {', '.join(stale_data)}. Consider refreshing data sources.")
-        
-        # Large dataset recommendations
-        large_datasets = [
-            name for name, sample in schema_context.data_samples.items()
-            if sample.total_count > 1000
-        ]
-        
-        if large_datasets:
-            recommendations.append(f"Large datasets detected in {', '.join(large_datasets)}. Use filters for better performance.")
-        
-        return recommendations[:2]  # Limit to top 2 data-aware recommendations
+        return recommendations[:2]  # Limit to top 2 recommendations
     
     def _calculate_confidence(self, score: int) -> str:
         """Calculate confidence level based on score"""

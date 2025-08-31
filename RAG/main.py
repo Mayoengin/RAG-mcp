@@ -593,9 +593,9 @@ async def main():
     except KeyboardInterrupt:
         print("\n\n👋 Demo interrupted. Goodbye!")
     except EOFError:
-        # Handle non-interactive environment by running a demo scenario
-        print("\n🎯 Non-interactive environment detected. Running demo scenario...")
-        await demo.run_single_demo_scenario()
+        # Handle non-interactive environment - just exit gracefully
+        print("\n🎯 Non-interactive environment detected. Exiting gracefully.")
+        print("💡 Use 'python main.py' and select a mode when prompted.")
     except Exception as e:
         print(f"\n❌ Demo error: {e}")
     
