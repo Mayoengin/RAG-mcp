@@ -90,6 +90,7 @@ class FTTHOLTResource(BaseModel):
         """Get comprehensive health and configuration summary"""
         return {
             "name": self.name,
+            "region": self.region,
             "environment": self.environment.value if hasattr(self.environment, 'value') else str(self.environment),
             "is_production": self.is_production(),
             "complete_config": self.has_complete_config(),

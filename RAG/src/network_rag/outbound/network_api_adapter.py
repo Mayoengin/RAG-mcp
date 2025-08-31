@@ -473,9 +473,9 @@ class NetworkAPIAdapter(NetworkPort):
             # Map API response to domain model fields
             domain_data = {
                 "name": raw_data.get("name", ""),
-                "ftth_olt_id": raw_data.get("id", raw_data.get("olt_id", "")),
+                "ftth_olt_id": raw_data.get("ftth_olt_id", raw_data.get("id", raw_data.get("olt_id", ""))),
                 "region": raw_data.get("region", ""),
-                "environment": Environment(raw_data.get("environment", "TEST")),
+                "environment": Environment(raw_data.get("olt_environment", raw_data.get("environment", "TEST"))),
                 "managed_by_inmanta": raw_data.get("managed_by_inmanta", False),
                 "service_configs": raw_data.get("service_configs", {}),
                 "created_at": self._parse_datetime(raw_data.get("created_at")),
@@ -519,7 +519,15 @@ class NetworkAPIAdapter(NetworkPort):
         
         # Additional client-side filtering for complex criteria
         for key, value in filters.items():
-            if key == "bandwidth_min" and olt.calculate_bandwidth_gbps() < value:
+            if key == "region" and olt.region != value:
+                return False
+            elif key == "environment" and olt.environment.value != value:
+                return False
+            elif key == "name" and olt.name != value:
+                return False
+            elif key == "managed_by_inmanta" and olt.managed_by_inmanta != value:
+                return False
+            elif key == "bandwidth_min" and olt.calculate_bandwidth_gbps() < value:
                 return False
             elif key == "has_complete_config" and value != olt.has_complete_config():
                 return False

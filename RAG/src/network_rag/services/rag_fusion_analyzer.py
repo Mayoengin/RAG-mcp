@@ -95,6 +95,27 @@ class RAGFusionAnalyzer:
             'complex_analysis': 0
         }
         
+        # PRIORITY: Score based on query content first (higher weight)
+        query_lower = query.lower()
+        
+        # Device listing patterns - queries asking for multiple devices
+        if any(word in query_lower for word in ['how many', 'count', 'list all', 'show all', 'inventory']):
+            analysis_patterns['device_listing'] += 3  # Higher weight for query content
+        if 'show me' in query_lower and any(word in query_lower for word in ['ftth olts', 'devices', 'olts']):
+            analysis_patterns['device_listing'] += 3  # "Show me FTTH OLTs..." = listing
+        if any(word in query_lower for word in ['olts in', 'devices in', 'ftth olts']) and any(word in query_lower for word in ['region', 'hobo', 'gent', 'asse']):
+            analysis_patterns['device_listing'] += 4  # Regional device queries = listing
+        
+        # Device details patterns - queries about specific single devices
+        if any(word in query_lower for word in ['specific', 'details for', 'configuration of']):
+            analysis_patterns['device_details'] += 3
+        if 'show me' in query_lower and any(word in query_lower for word in ['olt17prop01', 'specific device']):
+            analysis_patterns['device_details'] += 3  # "Show me OLT17PROP01" = details
+        
+        # Complex analysis patterns
+        if any(word in query_lower for word in ['impact', 'analysis', 'relationships', 'depends on']):
+            analysis_patterns['complex_analysis'] += 3
+        
         recommendations = []
         confidence_score = 0
         
@@ -144,8 +165,27 @@ class RAGFusionAnalyzer:
         
         query_lower = query.lower()
         
-        # Pattern-based fallback logic
-        if any(word in query_lower for word in ['how many', 'list', 'count', 'all']):
+        # Pattern-based fallback logic - improved pattern matching
+        device_listing_score = 0
+        device_details_score = 0
+        
+        # Device listing patterns
+        if any(word in query_lower for word in ['how many', 'count', 'list all', 'show all', 'inventory']):
+            device_listing_score += 3
+        if 'show me' in query_lower and any(word in query_lower for word in ['ftth olts', 'devices', 'olts']):
+            device_listing_score += 3
+        if any(word in query_lower for word in ['olts in', 'devices in', 'ftth olts']) and any(word in query_lower for word in ['region', 'hobo', 'gent', 'asse']):
+            device_listing_score += 4
+            
+        # Device details patterns  
+        if any(word in query_lower for word in ['specific', 'details for', 'configuration of']):
+            device_details_score += 3
+        if 'show me' in query_lower and any(word in query_lower for word in ['olt17prop01', 'specific device']):
+            device_details_score += 3
+        if any(device in query_lower for device in ['olt17prop01', 'cinaalsa01', 'specific']):
+            device_details_score += 3
+            
+        if device_listing_score > device_details_score and device_listing_score > 0:
             return {
                 'confidence': 'MEDIUM',
                 'tool_recommendation': 'list_network_devices',
@@ -155,7 +195,7 @@ class RAGFusionAnalyzer:
                 'recommendations': ['Use list_network_devices for inventory queries'],
                 'docs_analyzed': 0
             }
-        elif any(device in query_lower for device in ['olt17prop01', 'cinaalsa01', 'specific']):
+        elif device_details_score > 0:
             return {
                 'confidence': 'MEDIUM', 
                 'tool_recommendation': 'get_device_details',

@@ -164,7 +164,7 @@ class QueryController:
         else:
             primary_intent = "general_query"
         
-        return {
+        result = {
             "primary_intent": primary_intent,
             "needs_network_data": needs_network_data,
             "needs_knowledge_base": needs_knowledge_base,
@@ -174,6 +174,7 @@ class QueryController:
             "context_score": context_score,
             "complexity": "high" if len(query.split()) > 10 else "medium" if len(query.split()) > 5 else "low"
         }
+        return result
     
     async def _fetch_network_intelligence(self, query: str, result: QueryResult) -> None:
         """
@@ -672,6 +673,73 @@ When provided with network data, analyze it for:
     
     # =====================================
     # RAG FUSION & INTELLIGENT QUERY METHODS
+    
+    async def _generate_llm_response_with_device_data(
+        self, 
+        query: str, 
+        device_type: str, 
+        devices: List[Dict], 
+        filters_applied: Dict[str, Any]
+    ) -> str:
+        """Generate LLM response using fetched device data as rich context"""
+        
+        # Build rich context message with the actual data
+        context_parts = [
+            f"USER QUERY: {query}",
+            f"DEVICE TYPE: {device_type}",
+            f"TOTAL DEVICES FOUND: {len(devices)}",
+        ]
+        
+        if filters_applied:
+            filter_desc = ", ".join([f"{k}={v}" for k, v in filters_applied.items() if v])
+            context_parts.append(f"FILTERS APPLIED: {filter_desc}")
+        
+        context_parts.append("\nDEVICE DATA:")
+        for i, device in enumerate(devices, 1):
+            context_parts.append(f"\n{i}. Device: {device.get('name', 'Unknown')}")
+            context_parts.append(f"   - Region: {device.get('region', 'N/A')}")
+            context_parts.append(f"   - Environment: {device.get('environment', 'N/A')}")
+            context_parts.append(f"   - Managed by Inmanta: {device.get('managed_by_inmanta', False)}")
+            
+            if device.get('connection_type'):
+                context_parts.append(f"   - Connection: {device.get('connection_type')}")
+            if device.get('bandwidth_gbps'):
+                context_parts.append(f"   - Bandwidth: {device.get('bandwidth_gbps')} Gbps")
+            if device.get('service_count'):
+                context_parts.append(f"   - Services: {device.get('service_count')}")
+        
+        # Build messages for LLM
+        system_message = {
+            "role": "system",
+            "content": """You are a network infrastructure analyst. Analyze the provided FTTH OLT data and respond to the user's query with:
+
+1. A clear, professional summary of the findings
+2. Key insights about the devices (regions, environments, configurations)  
+3. Any notable patterns or issues you observe
+4. Practical recommendations if appropriate
+
+Be conversational but technical. Focus on what's most relevant to the user's specific question."""
+        }
+        
+        user_message = {
+            "role": "user", 
+            "content": "\n".join(context_parts)
+        }
+        
+        messages = [system_message, user_message]
+        
+        # Call LLM to generate intelligent response
+        try:
+            llm_response = await self.llm_port.generate_response(messages)
+            return llm_response
+        except Exception as e:
+            # Fallback to template if LLM fails
+            return self.response_formatter.format_device_list(
+                device_type=device_type,
+                devices=devices,
+                total_count=len(devices),
+                filters_applied=filters_applied
+            )
     # =====================================
     
     def initialize_rag_analyzer(self, document_controller, context_builder=None):
@@ -877,12 +945,31 @@ When provided with network data, analyze it for:
     async def _execute_original_device_listing_strategy(self, query: str, guidance: Dict[str, Any]) -> str:
         """Original device listing implementation"""
         device_type = self._determine_device_type_from_query(query)
-        filters = self._extract_filters_from_query(query)
+        filters = self._extract_smart_network_filters(query)  # Use smart filtering
         
         try:
             if device_type == "ftth_olt":
-                devices = await self.network_port.fetch_ftth_olts()
-                return self.response_formatter.format_device_list(devices, "FTTH OLT", filters)
+                devices = await self.network_port.fetch_ftth_olts(filters)  # Pass filters!
+                # Convert device objects to dictionaries for formatting
+                device_dicts = []
+                for device in devices:
+                    if hasattr(device, 'get_health_summary'):
+                        device_dicts.append(device.get_health_summary())
+                    else:
+                        device_dicts.append(device.__dict__ if hasattr(device, '__dict__') else device)
+                
+                # Apply filters if any
+                if filters.get('filter_text'):
+                    filter_text = filters['filter_text'].upper()
+                    device_dicts = [d for d in device_dicts if filter_text in d.get('region', '').upper() or filter_text in d.get('name', '').upper()]
+                
+                # Use LLM to generate response with fetched data as context
+                return await self._generate_llm_response_with_device_data(
+                    query=query, 
+                    device_type="FTTH OLT",
+                    devices=device_dicts,
+                    filters_applied=filters
+                )
             else:
                 # Load from JSON files for other types
                 devices = await self.network_port._load_local_json(device_type)

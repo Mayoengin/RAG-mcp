@@ -23,19 +23,19 @@ from network_rag.services.rag_fusion_analyzer import RAGFusionAnalyzer
 from network_rag.services.schema_registry import SchemaRegistry
 from network_rag.services.data_quality_service import DataQualityService
 from network_rag.services.schema_aware_context import SchemaAwareContextBuilder
-from network_rag.inbound.mcp_server import NetworkRAGServer
+from network_rag.inbound.mcp_server import MCPServerAdapter
 
-# Mock implementations for testing
+# Real implementations (when available)
 from network_rag.outbound.mongodb_adapter import MongoDBAdapter
 from network_rag.outbound.network_api_adapter import NetworkAPIAdapter
-from network_rag.outbound.llm_adapter import LLMAdapter
+from network_rag.outbound.llama_adapter import LlamaAdapter
 
 
 class NetworkRAGDemo:
     """Demo class to showcase the Schema-Aware RAG system"""
     
     def __init__(self):
-        self.server: Optional[NetworkRAGServer] = None
+        self.server: Optional[MCPServerAdapter] = None
         self.query_controller: Optional[QueryController] = None
         self.document_controller: Optional[DocumentController] = None
         
@@ -57,8 +57,40 @@ class NetworkRAGDemo:
                     connection_string=os.getenv("MONGODB_URI", "mongodb://localhost:27017"),
                     database_name="network_rag"
                 )
-                network_adapter = NetworkAPIAdapter()
-                llm_adapter = LLMAdapter()
+                # Use local files for network data
+                network_adapter = NetworkAPIAdapter(
+                    base_url="file://local",
+                    api_key="local_files"
+                )
+                # Check if LM Studio is available with your model
+                print("🔍 Checking for Llama model on LM Studio...")
+                try:
+                    import aiohttp
+                    async with aiohttp.ClientSession() as session:
+                        # Test LM Studio API with a simple request
+                        test_payload = {
+                            "model": "llama-3.2-8x3b-moe-dark-champion-instruct-uncensored-abliterated-18.4b@q8_0",
+                            "messages": [{"role": "user", "content": "Hello"}],
+                            "max_tokens": 5,
+                            "temperature": 0.1
+                        }
+                        async with session.post("http://127.0.0.1:1234/v1/chat/completions", 
+                                               json=test_payload, 
+                                               timeout=aiohttp.ClientTimeout(total=10)) as response:
+                            if response.status == 200:
+                                data = await response.json()
+                                if 'choices' in data and len(data['choices']) > 0:
+                                    print("✅ LM Studio is running with your Llama model!")
+                                    # Create enhanced mock that uses real Llama for generate_response
+                                    llm_adapter = await self._create_lm_studio_enhanced_mock()
+                                else:
+                                    print("⚠️  LM Studio responded but no model available")
+                                    llm_adapter = await self._create_mock_llm_adapter()
+                            else:
+                                raise Exception(f"LM Studio returned {response.status}")
+                except Exception as e:
+                    print(f"⚠️  LM Studio not available ({str(e)}). Using mock LLM for demonstration...")
+                    llm_adapter = await self._create_mock_llm_adapter()
             
             # Initialize core services
             schema_registry = SchemaRegistry()
@@ -86,10 +118,16 @@ class NetworkRAGDemo:
                 context_builder
             )
             
+            # Create mock learning and validation controllers
+            learning_controller = self._create_mock_learning_controller()
+            validation_controller = self._create_mock_validation_controller()
+            
             # Initialize MCP server
-            self.server = NetworkRAGServer(
+            self.server = MCPServerAdapter(
                 query_controller=self.query_controller,
-                document_controller=self.document_controller
+                document_controller=self.document_controller,
+                learning_controller=learning_controller,
+                validation_controller=validation_controller
             )
             
             # Initialize database if using real MongoDB
@@ -115,7 +153,7 @@ class NetworkRAGDemo:
                         "id": "doc_001",
                         "title": "FTTH OLT Configuration Guide",
                         "content": "Complete guide for configuring Fiber To The Home Optical Line Terminals. Covers HOBO region deployment, bandwidth allocation, and Inmanta management integration. Essential for production OLT setup.",
-                        "document_type": DocumentType.GUIDE,
+                        "document_type": DocumentType.CONFIGURATION_GUIDE,
                         "keywords": ["FTTH", "OLT", "configuration", "HOBO", "Inmanta"],
                         "usefulness_score": 0.92,
                         "embedding": [0.1] * 384  # Mock embedding
@@ -133,7 +171,7 @@ class NetworkRAGDemo:
                         "id": "doc_003",
                         "title": "HOBO Region Network Architecture",
                         "content": "Comprehensive overview of HOBO region network architecture including OLT placement, regional connectivity, and capacity planning. Critical for understanding regional network topology.",
-                        "document_type": DocumentType.REFERENCE,
+                        "document_type": DocumentType.API_REFERENCE,
                         "keywords": ["HOBO", "architecture", "network", "regional", "topology"],
                         "usefulness_score": 0.85,
                         "embedding": [0.15] * 384  # Mock embedding
@@ -308,63 +346,144 @@ class NetworkRAGDemo:
                 return [word for word, count in sorted_words[:max_keywords]]
             
             async def generate_response(self, messages):
-                """Generate mock LLM response"""
-                # Extract the user query from the last message
-                if messages and messages[-1].content:
-                    content = messages[-1].content
-                    
-                    if "data context" in content.lower():
-                        return """Based on the current network data and quality metrics provided:
-
-## Analysis Results
-
-**HOBO Region FTTH OLTs:** Found 4 devices total
-- **Production:** 3 OLTs (75% of regional capacity)
-- **UAT:** 1 OLT (testing environment)
-
-**Data Quality Assessment:** 🟢 Excellent (87% overall score)
-- Completeness: 95% ✅
-- Freshness: 90% ✅  
-- Consistency: 82% ✅
-
-**Issues Detected:** 2 devices require attention
-1. **OLT18PROP02:** Not managed by Inmanta (production risk)
-2. **OLT19PROP03:** Zero active services (capacity unused)
-
-**Recommendations:**
-💡 Prioritize OLT18PROP02 for Inmanta integration
-💡 Investigate OLT19PROP03 service allocation
-💡 Regional capacity utilization at 72% - within normal range
-
-**Documentation References:** 
-- FTTH OLT Configuration Guide (92% relevance)
-- Network Troubleshooting Best Practices (88% relevance)"""
-                    
-                    elif "how many" in content.lower() and "hobo" in content.lower():
-                        return """# HOBO Region FTTH OLT Analysis
-
-**Total FTTH OLTs in HOBO Region:** 4 devices
-
-## Distribution:
-- **Production Environment:** 3 OLTs
-  - OLT17PROP01: ✅ Operational (200 services)
-  - OLT18PROP02: ⚠️ Needs Inmanta management
-  - OLT19PROP03: ⚠️ No active services
-  
-- **UAT Environment:** 1 OLT
-  - OLT20PROP01: ✅ Testing (50 services)
-
-## Health Summary:
-- **Bandwidth Capacity:** 140 Gbps total
-- **Active Services:** 400 services across region
-- **Management Status:** 75% Inmanta managed
-- **Configuration Health:** 3/4 fully configured
-
-**Next Actions:** Review OLT18PROP02 and OLT19PROP03 configurations."""
-                
-                return "I can help analyze your network infrastructure. Please provide a specific query about FTTH OLTs, network devices, or configuration issues."
+                """Generate basic mock response - FORCES USE OF REAL LLM WHEN AVAILABLE"""
+                # Simple fallback that doesn't cheat with pre-written responses
+                return "Mock LLM unavailable. Please configure a real LLM service (LM Studio, Ollama, etc.) to get intelligent network analysis."
         
         return MockLLMAdapter()
+    
+    async def _create_llama_enhanced_mock(self, model_name: str):
+        """Create a mock LLM that uses real Llama for generate_response but mock for other methods"""
+        
+        # First create the base mock
+        mock_llm = await self._create_mock_llm_adapter()
+        
+        # Override the generate_response method to use real Llama
+        original_generate_response = mock_llm.generate_response
+        
+        async def llama_generate_response(messages):
+            """Use real Llama model for response generation"""
+            try:
+                import aiohttp
+                
+                # Convert messages to Ollama format
+                ollama_messages = []
+                for msg in messages:
+                    if hasattr(msg, 'role') and hasattr(msg, 'content'):
+                        role = "system" if hasattr(msg.role, 'value') and msg.role.value == "system" else "user"
+                        ollama_messages.append({"role": role, "content": msg.content})
+                    elif isinstance(msg, dict) and 'role' in msg and 'content' in msg:
+                        ollama_messages.append(msg)
+                
+                # Call Ollama API
+                payload = {
+                    "model": model_name,
+                    "messages": ollama_messages,
+                    "stream": False,
+                    "options": {"temperature": 0.7, "num_predict": 2048}
+                }
+                
+                async with aiohttp.ClientSession() as session:
+                    async with session.post("http://localhost:11434/api/chat", json=payload, timeout=aiohttp.ClientTimeout(total=60)) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            response_content = data.get('message', {}).get('content', 'No response generated')
+                            print(f"🤖 Llama response generated ({len(response_content)} chars)")
+                            return response_content
+                        else:
+                            print(f"⚠️  Llama API error: {response.status}, falling back to mock")
+                            return await original_generate_response(messages)
+                            
+            except Exception as e:
+                print(f"⚠️  Llama error: {e}, falling back to mock")
+                return await original_generate_response(messages)
+        
+        # Replace the generate_response method
+        mock_llm.generate_response = llama_generate_response
+        
+        return mock_llm
+    
+    async def _create_lm_studio_enhanced_mock(self):
+        """Create a mock LLM that uses real LM Studio for generate_response"""
+        
+        # First create the base mock
+        mock_llm = await self._create_mock_llm_adapter()
+        
+        # Override the generate_response method to use LM Studio
+        original_generate_response = mock_llm.generate_response
+        
+        async def lm_studio_generate_response(messages):
+            """Use real LM Studio for response generation"""
+            try:
+                import aiohttp
+                
+                # Convert messages to OpenAI format (LM Studio uses OpenAI-compatible API)
+                openai_messages = []
+                for msg in messages:
+                    if hasattr(msg, 'role') and hasattr(msg, 'content'):
+                        role = "system" if hasattr(msg.role, 'value') and msg.role.value == "system" else "user"
+                        openai_messages.append({"role": role, "content": msg.content})
+                    elif isinstance(msg, dict) and 'role' in msg and 'content' in msg:
+                        openai_messages.append(msg)
+                
+                # Call LM Studio API (OpenAI-compatible format)
+                payload = {
+                    "model": "llama-3.2-8x3b-moe-dark-champion-instruct-uncensored-abliterated-18.4b@q8_0",
+                    "messages": openai_messages,
+                    "max_tokens": 2048,
+                    "temperature": 0.7,
+                    "stream": False
+                }
+                
+                async with aiohttp.ClientSession() as session:
+                    async with session.post("http://127.0.0.1:1234/v1/chat/completions", 
+                                          json=payload, 
+                                          timeout=aiohttp.ClientTimeout(total=120)) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            if 'choices' in data and len(data['choices']) > 0:
+                                response_content = data['choices'][0]['message']['content']
+                                print(f"🤖 LM Studio Llama response generated ({len(response_content)} chars)")
+                                return response_content
+                            else:
+                                print("⚠️  LM Studio: No choices in response, falling back to mock")
+                                return "LM Studio error: No response choices available. Please check your model is loaded and try again."
+                        else:
+                            print(f"⚠️  LM Studio API error: {response.status}, falling back to mock")
+                            return f"LM Studio API error (HTTP {response.status}). Please check your LM Studio server is running and try again."
+                            
+            except Exception as e:
+                print(f"⚠️  LM Studio error: {e}, falling back to mock")
+                return f"LM Studio connection error: {str(e)}. Please ensure LM Studio is running on port 1234 and try again."
+        
+        # Replace the generate_response method
+        mock_llm.generate_response = lm_studio_generate_response
+        
+        return mock_llm
+    
+    def _create_mock_learning_controller(self):
+        """Create mock learning controller"""
+        
+        class MockLearningController:
+            async def learn_from_query(self, query, result):
+                return {"status": "learned", "query": query}
+            
+            async def get_learning_insights(self):
+                return {"insights": "Mock learning insights"}
+        
+        return MockLearningController()
+    
+    def _create_mock_validation_controller(self):
+        """Create mock validation controller"""
+        
+        class MockValidationController:
+            async def validate_query(self, query):
+                return {"valid": True, "query": query}
+            
+            async def validate_response(self, response):
+                return {"valid": True, "response_length": len(str(response))}
+        
+        return MockValidationController()
     
     async def run_demo_scenarios(self):
         """Run comprehensive demo scenarios"""
@@ -415,8 +534,11 @@ class NetworkRAGDemo:
             except Exception as e:
                 print(f"❌ Error: {e}")
             
-            print("\n" + "⏱️ " + "Press Enter to continue...")
-            input()
+            if input:  # Only prompt if running interactively
+                print("\n" + "⏱️ " + "Press Enter to continue...")
+                input()
+            else:
+                print("\n" + "-" * 50)
     
     async def interactive_mode(self):
         """Interactive query mode"""
@@ -454,6 +576,40 @@ class NetworkRAGDemo:
             except Exception as e:
                 print(f"❌ Error: {e}\n")
     
+    async def run_single_demo_scenario(self):
+        """Run a single demo scenario for non-interactive environments"""
+        print("\n" + "="*60)
+        print("🎯 SINGLE SCENARIO DEMONSTRATION")
+        print("="*60)
+        
+        scenario = {
+            "name": "Schema-Aware Regional Analysis",
+            "query": "Show me all the FTTH OLTs in GENT region",
+            "description": "Demonstrates schema-aware context with live data quality assessment"
+        }
+        
+        print(f"\n🔍 {scenario['name']}")
+        print(f"📝 Description: {scenario['description']}")
+        print(f"❓ Query: \"{scenario['query']}\"")
+        print("-" * 50)
+        
+        try:
+            # Execute the scenario
+            response = await self.server._execute_network_query({
+                "query": scenario["query"],
+                "include_recommendations": True
+            })
+            
+            print("🤖 Response:")
+            print(response)
+            
+            print("\n✅ Demo completed successfully!")
+            
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            import traceback
+            traceback.print_exc()
+    
     def print_system_overview(self):
         """Print system architecture overview"""
         print("\n" + "="*70)
@@ -461,43 +617,115 @@ class NetworkRAGDemo:
         print("="*70)
         
         architecture = """
-┌─────────────────────────────────────────────────────────────────┐
-│                     🎯 QUERY PROCESSING LAYER                   │
-├─────────────────────────────────────────────────────────────────┤
-│  MCP Server → Query Controller → Enhanced RAG Fusion Analyzer  │
-└─────────────────────────────────────────────────────────────────┘
-                                    │
-                    ┌───────────────┼───────────────┐
-                    │               │               │
-┌─────────────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│   📚 KNOWLEDGE BASE     │ │  🧠 SCHEMA      │ │  🌐 LIVE DATA   │
-│                         │ │     ANALYSIS    │ │                 │  
-│ • Vector embeddings     │ │                 │ │ • FTTH OLTs     │
-│ • Document search       │ │ • Schema registry│ │ • Network APIs  │
-│ • Similarity matching   │ │ • Quality service│ │ • Real-time     │
-│ • Business ranking      │ │ • Context builder│ │   health data   │
-└─────────────────────────┘ └─────────────────┘ └─────────────────┘
-                    │               │               │
-                    └───────────────┼───────────────┘
-                                    │
-┌─────────────────────────────────────────────────────────────────┐
-│                   ⚡ INTELLIGENT RESPONSE GENERATION            │
-├─────────────────────────────────────────────────────────────────┤
-│  Rich Context = Documents + Schema + Data + Quality Metrics    │
-│             │                                                   │
-│             ▼                                                   │
-│  LLM receives comprehensive context for intelligent analysis    │
-└─────────────────────────────────────────────────────────────────┘
+╔═══════════════════════════════════════════════════════════════════════════════════╗
+║                          🎯 SCHEMA-AWARE RAG SYSTEM ARCHITECTURE                  ║
+╠═══════════════════════════════════════════════════════════════════════════════════╣
+║                                                                                   ║
+║  ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────────────────┐  ║
+║  │   🌐 USER       │───▶│  📡 MCP SERVER   │───▶│  🎮 QUERY CONTROLLER       │  ║
+║  │   INTERFACE     │    │  • Tool routing  │    │  • Business logic          │  ║
+║  │   • CLI/API     │    │  • Protocol mgmt │    │  • Multi-source fusion     │  ║
+║  └─────────────────┘    └──────────────────┘    └─────────────────────────────┘  ║
+║                                                                │                  ║
+║                                                                ▼                  ║
+║  ┌─────────────────────────────────────────────────────────────────────────────┐  ║
+║  │                    🧠 ENHANCED RAG FUSION ANALYZER                         │  ║
+║  │  • Query intent analysis     • Schema-aware context building              │  ║
+║  │  • Tool selection strategy   • Data quality assessment                    │  ║
+║  │  • Document retrieval        • Multi-source data fusion                   │  ║
+║  └─────────────────────────────────────────────────────────────────────────────┘  ║
+║                              │               │               │                    ║
+║        ┌─────────────────────┼───────────────┼───────────────┼─────────────────┐  ║
+║        │                     │               │               │                 │  ║
+║        ▼                     ▼               ▼               ▼                 ▼  ║
+║  ┌──────────┐  ┌──────────────────┐  ┌─────────────┐  ┌─────────────┐  ┌──────────┐ ║
+║  │📚 VECTOR │  │🗃️  KNOWLEDGE     │  │🧬 SCHEMA    │  │🌐 NETWORK   │  │💾 DATA   │ ║
+║  │EMBEDDINGS│  │   DATABASE       │  │ REGISTRY    │  │   APIS      │  │QUALITY   │ ║
+║  │          │  │                  │  │             │  │             │  │SERVICE   │ ║
+║  │• Semantic│  │• Config guides   │  │• Data types │  │• FTTH OLTs  │  │• Health  │ ║
+║  │  search  │  │• Troubleshooting │  │• Validation │  │• Real-time  │  │  checks  │ ║
+║  │• Document│  │• Best practices  │  │• Schemas    │  │  status     │  │• Quality │ ║
+║  │  ranking │  │• API references  │  │• Context    │  │• Filtering  │  │  scores  │ ║
+║  │• Similarity│ │• Network docs   │  │  builders   │  │• JSON data  │  │• Metrics │ ║
+║  └──────────┘  └──────────────────┘  └─────────────┘  └─────────────┘  └──────────┘ ║
+║        │                     │               │               │                 │  ║
+║        └─────────────────────┼───────────────┼───────────────┼─────────────────┘  ║
+║                              │               │               │                    ║
+║                              ▼               ▼               ▼                    ║
+║  ┌─────────────────────────────────────────────────────────────────────────────┐  ║
+║  │                    🎯 INTELLIGENT CONTEXT BUILDER                          │  ║
+║  │                                                                             │  ║
+║  │  📊 Data Context:           🧠 Schema Context:         📚 Knowledge Context: │  ║
+║  │  • Live FTTH OLT data      • Field definitions       • Relevant documents   │  ║
+║  │  • Regional filtering      • Data relationships      • Configuration guides │  ║
+║  │  • Quality metrics         • Validation rules        • Best practices       │  ║
+║  │  • Real-time status        • Type constraints        • Troubleshooting tips │  ║
+║  └─────────────────────────────────────────────────────────────────────────────┘  ║
+║                                           │                                       ║
+║                                           ▼                                       ║
+║  ┌─────────────────────────────────────────────────────────────────────────────┐  ║
+║  │                      🤖 LARGE LANGUAGE MODEL                               │  ║
+║  │                                                                             │  ║
+║  │  Input: Rich Context = Live Data + Schema Info + Knowledge Base            │  ║
+║  │  ┌─────────────────────────────────────────────────────────────────────┐   │  ║
+║  │  │ SYSTEM PROMPT: "You are a network infrastructure analyst..."        │   │  ║
+║  │  │ USER CONTEXT:                                                       │   │  ║
+║  │  │ • Query: "Show me FTTH OLTs in GENT region"                        │   │  ║
+║  │  │ • 5 devices found: OLT17LEUV01, OLT70NIKL01, etc.                 │   │  ║
+║  │  │ • Device details: regions, environments, configurations             │   │  ║
+║  │  │ • Schema: FTTH OLT data structure and validation rules             │   │  ║
+║  │  │ • Knowledge: Network configuration best practices                   │   │  ║
+║  │  └─────────────────────────────────────────────────────────────────────┘   │  ║
+║  │                                   ▼                                         │  ║
+║  │  Output: Intelligent Analysis with Insights & Recommendations              │  ║
+║  └─────────────────────────────────────────────────────────────────────────────┘  ║
+║                                           │                                       ║
+║                                           ▼                                       ║
+║  ┌─────────────────────────────────────────────────────────────────────────────┐  ║
+║  │                     ✨ INTELLIGENT RESPONSE                                 │  ║
+║  │                                                                             │  ║
+║  │  🎯 Analysis: "Found 5 FTTH OLTs in GENT region"                          │  ║
+║  │  🔍 Insights: "4 production, 1 UAT - mature deployment"                   │  ║
+║  │  📊 Details: Device-by-device breakdown with status                        │  ║
+║  │  🛠️  Recommendations: "Consider promoting UAT to production"               │  ║
+║  │  ⚡ Powered by: Live data + Schema awareness + Domain knowledge           │  ║
+║  └─────────────────────────────────────────────────────────────────────────────┘  ║
+║                                                                                   ║
+╚═══════════════════════════════════════════════════════════════════════════════════╝
         """
         
         print(architecture)
         
-        print("\n🎯 KEY INNOVATIONS:")
-        print("✅ Schema-Aware Context: LLM sees data structure + content")
-        print("✅ Quality-Driven Decisions: Automatic data health assessment") 
-        print("✅ Real-Time Integration: Live network data + knowledge base")
-        print("✅ Business Intelligence: Operational context in responses")
-        print("✅ Production Ready: Clean architecture + error handling")
+        print("\n🎯 KEY INNOVATIONS & CAPABILITIES:")
+        print("┌─────────────────────────────────────────────────────────────────────┐")
+        print("│  🧠 SCHEMA-AWARE RAG FUSION                                         │")
+        print("│  ✅ LLM receives structured data + schema context + domain knowledge│")
+        print("│  ✅ Multi-source intelligence: Vector DB + Live APIs + Schemas     │")
+        print("│  ✅ Query intent analysis drives intelligent tool selection        │")
+        print("│                                                                     │")
+        print("│  🌐 REAL-TIME NETWORK INTEGRATION                                  │")
+        print("│  ✅ Live FTTH OLT data from network APIs and JSON sources          │")
+        print("│  ✅ Regional filtering (GENT, HOBO, ROES, ASSE regions)            │")
+        print("│  ✅ Environment-aware (Production, UAT, Test environments)         │")
+        print("│  ✅ Inmanta configuration management integration                    │")
+        print("│                                                                     │")
+        print("│  📊 DATA QUALITY & HEALTH ASSESSMENT                               │")
+        print("│  ✅ Automatic data completeness and freshness scoring              │")
+        print("│  ✅ Schema validation and constraint checking                       │")
+        print("│  ✅ Real-time network device health monitoring                     │")
+        print("│                                                                     │")
+        print("│  🎯 INTELLIGENT ANALYSIS & RECOMMENDATIONS                         │")
+        print("│  ✅ Context-aware insights (production vs UAT analysis)            │")
+        print("│  ✅ Network topology understanding and pattern recognition         │")
+        print("│  ✅ Actionable recommendations based on operational context        │")
+        print("│  ✅ Multi-dimensional analysis: technical + business intelligence  │")
+        print("│                                                                     │")
+        print("│  🏗️ PRODUCTION-READY ARCHITECTURE                                  │")
+        print("│  ✅ Clean separation: Controllers, Services, Adapters, Models      │")
+        print("│  ✅ Comprehensive error handling and graceful degradation          │")
+        print("│  ✅ MCP protocol integration for tool-based AI interactions       │")
+        print("│  ✅ Scalable design supporting multiple data sources & LLM models  │")
+        print("└─────────────────────────────────────────────────────────────────────┘")
 
 
 async def main():
@@ -508,7 +736,7 @@ async def main():
     demo = NetworkRAGDemo()
     
     # Initialize system
-    success = await demo.initialize(use_mock_data=True)
+    success = await demo.initialize(use_mock_data=False)
     if not success:
         print("❌ Failed to initialize system. Exiting.")
         return
@@ -535,6 +763,10 @@ async def main():
             
     except KeyboardInterrupt:
         print("\n\n👋 Demo interrupted. Goodbye!")
+    except EOFError:
+        # Handle non-interactive environment by running a demo scenario
+        print("\n🎯 Non-interactive environment detected. Running demo scenario...")
+        await demo.run_single_demo_scenario()
     except Exception as e:
         print(f"\n❌ Demo error: {e}")
     
