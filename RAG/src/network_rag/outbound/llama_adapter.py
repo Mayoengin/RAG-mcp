@@ -17,8 +17,8 @@ class LlamaAdapter:
         self,
         base_url: str = "http://localhost:11434",
         model_name: str = "llama-3.2-8x3b-moe-dark-champion-instruct-uncensored-abliterated-18.4b@q8_0",
-        timeout: int = 120,
-        max_retries: int = 3
+        timeout: int = 15,
+        max_retries: int = 2
     ):
         self.base_url = base_url.rstrip('/')
         self.model_name = model_name

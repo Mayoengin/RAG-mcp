@@ -21,6 +21,8 @@ class MongoDBAdapter(VectorSearchPort):
         self.client = AsyncIOMotorClient(connection_string)
         self.db: AsyncIOMotorDatabase = self.client[database_name]
         self.documents_collection = self.db.documents
+        self.health_rules_collection = self.db.health_rules
+        self.health_vectors_collection = self.db.health_vectors
         self.vectors_collection = self.db.vectors
     
     async def initialize(self) -> None:
@@ -34,6 +36,24 @@ class MongoDBAdapter(VectorSearchPort):
                 IndexModel([("title", TEXT), ("content", TEXT)])
             ]
             await self.documents_collection.create_indexes(document_indexes)
+            
+            # Create indexes for health rules (separate collection)
+            health_rule_indexes = [
+                IndexModel([("device_type", ASCENDING)]),
+                IndexModel([("rule_type", ASCENDING)]),
+                IndexModel([("id", ASCENDING)]),
+                IndexModel([("title", TEXT), ("content", TEXT)]),
+                IndexModel([("keywords", ASCENDING)])
+            ]
+            await self.health_rules_collection.create_indexes(health_rule_indexes)
+            
+            # Create health rules vectors collection
+            self.health_vectors_collection = self.db.health_vectors
+            health_vector_indexes = [
+                IndexModel([("rule_id", ASCENDING)]),
+                IndexModel([("embedding_model", ASCENDING)])
+            ]
+            await self.health_vectors_collection.create_indexes(health_vector_indexes)
             
             # Create indexes for vectors
             vector_indexes = [
@@ -52,7 +72,7 @@ class MongoDBAdapter(VectorSearchPort):
                 "id": document.id,
                 "title": document.title,
                 "content": document.content,
-                "document_type": document.document_type.value,
+                "document_type": document.document_type.value if hasattr(document.document_type, 'value') else document.document_type,
                 "keywords": document.keywords,
                 "usefulness_score": document.usefulness_score,
                 "created_at": document.created_at,
@@ -204,11 +224,18 @@ class MongoDBAdapter(VectorSearchPort):
         """Get document embedding"""
         return None  # Stub implementation
     
+    async def delete_document(self, document_id: str) -> bool:
+        """Delete document from MongoDB"""
+        try:
+            result = await self.documents_collection.delete_one({"id": document_id})
+            await self.vectors_collection.delete_one({"document_id": document_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            raise DatabaseError(f"Failed to delete document: {str(e)}")
+
     async def remove_document_from_index(self, document_id: str) -> bool:
-        """Remove document from index"""
-        await self.documents_collection.delete_one({"id": document_id})
-        await self.vectors_collection.delete_one({"document_id": document_id})
-        return True
+        """Remove document from index (alias for delete_document)"""
+        return await self.delete_document(document_id)
     
     async def update_document_embedding(self, document_id: str, embedding: List[float]) -> bool:
         """Update document embedding"""
@@ -236,6 +263,150 @@ class MongoDBAdapter(VectorSearchPort):
         """Get embedding dimension"""
         return 384  # Default dimension
     
+    async def store_health_rule(self, health_rule_data: Dict[str, Any]) -> str:
+        """Store health rule in dedicated health rules collection"""
+        try:
+            rule_data = {
+                "id": health_rule_data["id"],
+                "title": health_rule_data["title"],
+                "content": health_rule_data["content"],
+                "device_type": health_rule_data.get("device_type", "unknown"),
+                "rule_type": health_rule_data.get("rule_type", "health_analysis"),
+                "keywords": health_rule_data.get("keywords", []),
+                "executable_rules": health_rule_data.get("executable_rules", {}),
+                "usefulness_score": health_rule_data.get("usefulness_score", 0.95),
+                "version": health_rule_data.get("version", "1.0"),
+                "author": health_rule_data.get("author", "System"),
+                "created_at": health_rule_data.get("created_at", datetime.utcnow()),
+                "updated_at": datetime.utcnow()
+            }
+            
+            await self.health_rules_collection.replace_one(
+                {"id": health_rule_data["id"]}, 
+                rule_data, 
+                upsert=True
+            )
+            
+            return health_rule_data["id"]
+            
+        except Exception as e:
+            raise DatabaseError(f"Failed to store health rule: {str(e)}")
+    
+    async def get_health_rule(self, rule_id: str) -> Optional[Dict[str, Any]]:
+        """Get health rule by ID from health rules collection"""
+        try:
+            return await self.health_rules_collection.find_one({"id": rule_id})
+        except Exception as e:
+            raise DatabaseError(f"Failed to get health rule: {str(e)}")
+    
+    async def search_health_rules(self, device_type: str = None, rule_type: str = None, limit: int = 10) -> List[Dict[str, Any]]:
+        """Search health rules by device type or rule type"""
+        try:
+            query = {}
+            if device_type:
+                query["device_type"] = device_type
+            if rule_type:
+                query["rule_type"] = rule_type
+            
+            cursor = self.health_rules_collection.find(query).limit(limit)
+            return await cursor.to_list(length=limit)
+            
+        except Exception as e:
+            raise DatabaseError(f"Failed to search health rules: {str(e)}")
+    
+    async def delete_health_rule(self, rule_id: str) -> bool:
+        """Delete health rule from health rules collection"""
+        try:
+            # Delete rule and its vector
+            result = await self.health_rules_collection.delete_one({"id": rule_id})
+            await self.health_vectors_collection.delete_one({"rule_id": rule_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            raise DatabaseError(f"Failed to delete health rule: {str(e)}")
+    
+    async def store_health_rule_embedding(self, rule_id: str, embedding: List[float], model: str = "default") -> bool:
+        """Store embedding for a health rule"""
+        try:
+            vector_data = {
+                "rule_id": rule_id,
+                "embedding": embedding,
+                "embedding_model": model,
+                "created_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow()
+            }
+            
+            await self.health_vectors_collection.replace_one(
+                {"rule_id": rule_id, "embedding_model": model},
+                vector_data,
+                upsert=True
+            )
+            return True
+            
+        except Exception as e:
+            raise DatabaseError(f"Failed to store health rule embedding: {str(e)}")
+    
+    async def get_health_rule_embedding(self, rule_id: str, model: str = "default") -> Optional[List[float]]:
+        """Get embedding for a health rule"""
+        try:
+            vector_data = await self.health_vectors_collection.find_one({
+                "rule_id": rule_id, 
+                "embedding_model": model
+            })
+            return vector_data.get("embedding") if vector_data else None
+            
+        except Exception as e:
+            raise DatabaseError(f"Failed to get health rule embedding: {str(e)}")
+    
+    async def find_similar_health_rules(self, query_embedding: List[float], limit: int = 5, device_type: str = None) -> List[Tuple[Dict[str, Any], float]]:
+        """Find similar health rules using vector search"""
+        try:
+            # Simple cosine similarity implementation (in production, use vector database)
+            similar_rules = []
+            
+            # Get all health rule vectors
+            query = {"embedding_model": "default"}
+            async for vector_doc in self.health_vectors_collection.find(query):
+                rule_embedding = vector_doc.get("embedding", [])
+                if not rule_embedding:
+                    continue
+                
+                # Calculate cosine similarity
+                similarity = self._calculate_cosine_similarity(query_embedding, rule_embedding)
+                
+                # Get the actual rule
+                rule_id = vector_doc.get("rule_id")
+                rule = await self.get_health_rule(rule_id)
+                
+                if rule and (not device_type or rule.get("device_type") == device_type):
+                    similar_rules.append((rule, similarity))
+            
+            # Sort by similarity and return top results
+            similar_rules.sort(key=lambda x: x[1], reverse=True)
+            return similar_rules[:limit]
+            
+        except Exception as e:
+            raise DatabaseError(f"Failed to find similar health rules: {str(e)}")
+    
+    def _calculate_cosine_similarity(self, vec1: List[float], vec2: List[float]) -> float:
+        """Calculate cosine similarity between two vectors"""
+        try:
+            import math
+            
+            if len(vec1) != len(vec2):
+                return 0.0
+            
+            dot_product = sum(a * b for a, b in zip(vec1, vec2))
+            magnitude1 = math.sqrt(sum(a * a for a in vec1))
+            magnitude2 = math.sqrt(sum(a * a for a in vec2))
+            
+            if magnitude1 == 0 or magnitude2 == 0:
+                return 0.0
+            
+            return dot_product / (magnitude1 * magnitude2)
+            
+        except Exception:
+            return 0.0
+
     async def close(self) -> None:
         """Close MongoDB connection"""
         if self.client:

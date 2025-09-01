@@ -19,6 +19,7 @@ from mcp.server.fastmcp import FastMCP
 # Network RAG imports
 from network_rag.controller.query_controller import QueryController
 from network_rag.controller.document_controller import DocumentController
+from network_rag.services.knowledge_driven_health import KnowledgeDrivenHealthAnalyzer
 
 # Create the MCP server instance
 mcp = FastMCP("network-rag-server")
@@ -240,19 +241,15 @@ async def _execute_device_listing_strategy(query: str, guidance: dict) -> str:
         if not devices:
             return f"## Device Listing Result\nNo FTTH OLTs found matching your criteria.\n\n"
         
-        # Get device summaries
+        # Use knowledge-driven health analysis
+        health_analyzer = KnowledgeDrivenHealthAnalyzer(document_controller)
+        
+        # Get device summaries using knowledge-based rules
         device_summaries = []
         for device in devices[:10]:  # Limit to 10 devices
-            health = device.get_health_summary()
-            device_summaries.append({
-                "name": health["name"],
-                "region": health["region"],
-                "environment": health["environment"],
-                "bandwidth_gbps": health["bandwidth_gbps"],
-                "service_count": health["service_count"],
-                "managed_by_inmanta": health["managed_by_inmanta"],
-                "complete_config": health["complete_config"]
-            })
+            # Analyze health using knowledge base rules
+            health = await health_analyzer.analyze_device_health(device, device_type="ftth_olt")
+            device_summaries.append(health)
         
         # Build detailed result
         result_parts = [
@@ -264,14 +261,37 @@ async def _execute_device_listing_strategy(query: str, guidance: dict) -> str:
             result_parts.append(f" in **{region}** region")
         result_parts.append(".\n\n")
         
-        # Add device table
-        result_parts.append("### Device Summary\n")
+        # Add device table with enhanced health information
+        result_parts.append("### Device Summary with Knowledge-Based Health Analysis\n")
         for i, summary in enumerate(device_summaries, 1):
+            # Basic device info
             result_parts.append(f"{i}. **{summary['name']}** ")
             result_parts.append(f"({summary['region']}/{summary['environment']}) - ")
-            result_parts.append(f"{summary['bandwidth_gbps']}Gbps, ")
-            result_parts.append(f"{summary['service_count']} services, ")
-            result_parts.append(f"Inmanta: {'✅' if summary['managed_by_inmanta'] else '❌'}\n")
+            
+            # Health status indicator
+            status_emoji = {
+                'CRITICAL': '🔴',
+                'WARNING': '⚠️',
+                'HEALTHY': '✅',
+                'UNKNOWN': '❓'
+            }.get(summary.get('health_status', 'UNKNOWN'), '❓')
+            result_parts.append(f"{status_emoji} {summary.get('health_status', 'UNKNOWN')} ")
+            
+            # Key metrics
+            result_parts.append(f"[Score: {summary.get('health_score', 'N/A')}/100] ")
+            result_parts.append(f"{summary.get('bandwidth_gbps', 0)}Gbps, ")
+            result_parts.append(f"{summary.get('service_count', 0)} services")
+            
+            # Add risk level if critical or warning
+            if summary.get('risk_level') in ['HIGH_RISK', 'MEDIUM_RISK']:
+                result_parts.append(f" ⚡ {summary.get('risk_level', '')}")
+            
+            result_parts.append("\n")
+            
+            # Add recommendations if any
+            if summary.get('recommendations'):
+                for rec in summary['recommendations'][:1]:  # Show first recommendation
+                    result_parts.append(f"   └─ {rec}\n")
         
         if len(devices) > 10:
             result_parts.append(f"\n*Showing first 10 of {len(devices)} devices*\n")
@@ -302,16 +322,39 @@ async def _execute_device_details_strategy(query: str, guidance: dict) -> str:
         if not device:
             return f"## Device Details Error\nDevice '{device_name}' not found.\n\n"
         
-        health = device.get_health_summary()
+        # Use knowledge-driven health analysis
+        health_analyzer = KnowledgeDrivenHealthAnalyzer(document_controller)
+        health = await health_analyzer.analyze_device_health(device, device_type="ftth_olt")
+        
+        # Health status emoji
+        status_emoji = {
+            'CRITICAL': '🔴',
+            'WARNING': '⚠️',
+            'HEALTHY': '✅',
+            'UNKNOWN': '❓'
+        }.get(health.get('health_status', 'UNKNOWN'), '❓')
+        
         result_parts = [
             f"## Device Details: {device_name}\n\n",
-            f"**Region:** {health['region']}\n",
-            f"**Environment:** {health['environment']}\n",
-            f"**Bandwidth:** {health['bandwidth_gbps']} Gbps\n",
-            f"**Service Count:** {health['service_count']}\n",
-            f"**Inmanta Managed:** {'Yes' if health['managed_by_inmanta'] else 'No'}\n",
-            f"**Complete Config:** {'Yes' if health['complete_config'] else 'No'}\n\n"
+            f"### Health Analysis {status_emoji}\n",
+            f"**Status:** {health.get('health_status', 'UNKNOWN')}\n",
+            f"**Health Score:** {health.get('health_score', 'N/A')}/100\n",
+            f"**Risk Level:** {health.get('risk_level', 'UNKNOWN')}\n\n",
+            f"### Configuration\n",
+            f"**Region:** {health.get('region', 'Unknown')}\n",
+            f"**Environment:** {health.get('environment', 'Unknown')}\n",
+            f"**Bandwidth:** {health.get('bandwidth_gbps', 0)} Gbps\n",
+            f"**Service Count:** {health.get('service_count', 0)}\n",
+            f"**Inmanta Managed:** {'Yes' if health.get('managed_by_inmanta') else 'No'}\n",
+            f"**Complete Config:** {'Yes' if health.get('complete_config') else 'No'}\n\n"
         ]
+        
+        # Add recommendations
+        if health.get('recommendations'):
+            result_parts.append("### Recommendations\n")
+            for rec in health['recommendations']:
+                result_parts.append(f"• {rec}\n")
+            result_parts.append("\n")
         
         return "".join(result_parts)
         
@@ -386,6 +429,221 @@ def _extract_device_name_from_query(query: str) -> Optional[str]:
         return match.group(1)
     
     return None
+
+@mcp.tool()
+async def manage_health_rules(
+    action: str = "list",
+    device_type: Optional[str] = None,
+    rule_content: Optional[str] = None
+) -> str:
+    """Manage health analysis rules in the MongoDB knowledge base.
+    
+    This tool allows viewing, understanding, and managing health rules stored in MongoDB.
+    Health rules define how device health is analyzed and scored.
+    
+    Args:
+        action: Action to perform - 'list', 'describe', 'search', or 'status'
+        device_type: Type of device rules to manage (ftth_olt, mobile_modem, etc.)
+        rule_content: Reserved for future rule updates (not implemented yet)
+        
+    Returns:
+        Information about health rules or operation result
+    """
+    if not document_controller:
+        return "Error: Document controller not initialized"
+    
+    try:
+        if action == "list":
+            # List health rules from MongoDB knowledge base
+            response_parts = [
+                "# Health Analysis Rules in MongoDB Knowledge Base\n\n"
+            ]
+            
+            # Search for health rules in MongoDB
+            health_docs = await document_controller.search_documents(
+                query="health analysis framework rules",
+                limit=10,
+                use_vector_search=True
+            )
+            
+            if not health_docs:
+                return "No health analysis rules found in MongoDB knowledge base. Run system initialization to load them."
+            
+            rules_found = 0
+            for doc in health_docs:
+                doc_title = doc.title if hasattr(doc, 'title') else str(doc.get('title', ''))
+                doc_id = doc.id if hasattr(doc, 'id') else doc.get('id', '')
+                
+                # Skip executable rules metadata documents
+                if '_executable' in doc_id:
+                    continue
+                
+                if 'health' in doc_title.lower() and 'analysis' in doc_title.lower():
+                    rules_found += 1
+                    response_parts.append(f"## {doc_title}\n")
+                    response_parts.append(f"- **ID:** {doc_id}\n")
+                    
+                    # Try to determine device type from content
+                    doc_content = doc.content if hasattr(doc, 'content') else doc.get('content', '')
+                    if 'ftth_olt' in doc_content.lower() or 'ftth olt' in doc_content.lower():
+                        response_parts.append(f"- **Device Type:** FTTH OLT\n")
+                    elif 'mobile_modem' in doc_content.lower() or 'mobile modem' in doc_content.lower():
+                        response_parts.append(f"- **Device Type:** Mobile Modem\n")
+                    elif 'environment' in doc_content.lower() and 'specific' in doc_content.lower():
+                        response_parts.append(f"- **Device Type:** Environment-Specific Rules\n")
+                    
+                    # Show keywords
+                    keywords = getattr(doc, 'keywords', []) or doc.get('keywords', [])
+                    if keywords:
+                        response_parts.append(f"- **Keywords:** {', '.join(keywords[:5])}\n")
+                    
+                    # Show usefulness score
+                    score = getattr(doc, 'usefulness_score', None) or doc.get('usefulness_score')
+                    if score:
+                        response_parts.append(f"- **Quality Score:** {score:.2f}\n")
+                    
+                    response_parts.append("\n")
+            
+            if rules_found == 0:
+                return "No health analysis rules found in MongoDB. The documents may not be properly tagged."
+            
+            response_parts.append(f"📊 **Total Rules Found:** {rules_found}\n")
+            response_parts.append(f"💾 **Storage:** MongoDB Knowledge Base\n")
+            
+            return "".join(response_parts)
+        
+        elif action == "describe" and device_type:
+            # Describe specific device type rules from MongoDB
+            search_query = f"health analysis rules {device_type}"
+            health_docs = await document_controller.search_documents(
+                query=search_query,
+                limit=3,
+                use_vector_search=True
+            )
+            
+            if not health_docs:
+                return f"No health rules found for device type '{device_type}' in MongoDB knowledge base."
+            
+            # Find the best matching document
+            best_doc = None
+            for doc in health_docs:
+                doc_title = doc.title if hasattr(doc, 'title') else str(doc.get('title', ''))
+                if device_type.lower() in doc_title.lower():
+                    best_doc = doc
+                    break
+            
+            if not best_doc:
+                best_doc = health_docs[0]  # Use first document as fallback
+            
+            doc_title = best_doc.title if hasattr(best_doc, 'title') else best_doc.get('title', 'Unknown')
+            doc_content = best_doc.content if hasattr(best_doc, 'content') else best_doc.get('content', '')
+            doc_id = best_doc.id if hasattr(best_doc, 'id') else best_doc.get('id', '')
+            
+            response_parts = [
+                f"# Health Rules: {doc_title}\n\n",
+                f"**Document ID:** {doc_id}\n",
+                f"**Source:** MongoDB Knowledge Base\n\n",
+                "## Rule Content\n",
+                f"{doc_content}\n\n"
+            ]
+            
+            # Try to find executable rules metadata
+            executable_docs = await document_controller.search_documents(
+                query=f"executable rules {doc_id}",
+                limit=2
+            )
+            
+            for exec_doc in executable_docs:
+                exec_content = exec_doc.content if hasattr(exec_doc, 'content') else exec_doc.get('content', '')
+                if 'executable_rules' in exec_content:
+                    try:
+                        import json
+                        metadata = json.loads(exec_content)
+                        if 'executable_rules' in metadata:
+                            exec_rules = metadata['executable_rules']
+                            
+                            response_parts.append("## Executable Rules (from MongoDB)\n")
+                            
+                            if 'summary_fields' in exec_rules:
+                                response_parts.append("### Extracted Fields\n")
+                                for field in exec_rules['summary_fields']:
+                                    response_parts.append(f"- {field}\n")
+                                response_parts.append("\n")
+                            
+                            if 'health_conditions' in exec_rules:
+                                response_parts.append("### Health Conditions\n")
+                                for status, conditions in exec_rules['health_conditions'].items():
+                                    response_parts.append(f"**{status}:**\n")
+                                    for cond in conditions[:2]:
+                                        if isinstance(cond, dict):
+                                            if 'condition' in cond:
+                                                response_parts.append(f"- {cond['condition']}\n")
+                                            else:
+                                                field = cond.get('field', '')
+                                                op = cond.get('operator', '')
+                                                val = cond.get('value', '')
+                                                response_parts.append(f"- {field} {op} {val}\n")
+                                    response_parts.append("\n")
+                            break
+                    except json.JSONDecodeError:
+                        continue
+            
+            return "".join(response_parts)
+        
+        elif action == "search":
+            # Search for health rules by keyword
+            search_term = device_type or "health"
+            search_results = await document_controller.search_documents(
+                query=f"{search_term} health rules",
+                limit=5
+            )
+            
+            response_parts = [f"# Search Results for '{search_term}'\n\n"]
+            
+            for doc in search_results:
+                doc_title = doc.title if hasattr(doc, 'title') else str(doc.get('title', ''))
+                doc_id = doc.id if hasattr(doc, 'id') else doc.get('id', '')
+                
+                if 'health' in doc_title.lower():
+                    response_parts.append(f"- **{doc_title}** (ID: {doc_id})\n")
+            
+            return "".join(response_parts)
+        
+        elif action == "status":
+            # Show status of health rules system
+            response_parts = [
+                "# Health Rules System Status\n\n",
+                "## Knowledge Base Integration\n",
+                "✅ **Storage:** MongoDB Knowledge Base\n",
+                "✅ **Search:** Vector and keyword search enabled\n",
+                "✅ **Caching:** Rule caching for performance\n",
+                "✅ **Dynamic Loading:** Rules loaded from database at runtime\n\n"
+            ]
+            
+            # Test search capability
+            test_search = await document_controller.search_documents(
+                query="health analysis",
+                limit=1
+            )
+            
+            if test_search:
+                response_parts.append("✅ **Search Test:** Health rules found in knowledge base\n")
+            else:
+                response_parts.append("⚠️  **Search Test:** No health rules found - may need initialization\n")
+            
+            return "".join(response_parts)
+        
+        else:
+            return """Supported actions:
+- 'list': View all health rules in MongoDB
+- 'describe': View specific device type rules (specify device_type)
+- 'search': Search health rules by keyword (use device_type as search term)  
+- 'status': Show health rules system status
+
+Example: manage_health_rules(action="describe", device_type="ftth_olt")"""
+            
+    except Exception as e:
+        return f"Health rule management error: {str(e)}"
 
 if __name__ == "__main__":
     # This will be called when running the server directly

@@ -19,7 +19,7 @@ class NetworkAPIAdapter(NetworkPort):
         base_url: str, 
         api_key: str,
         timeout: int = 30,
-        max_retries: int = 3
+        max_retries: int = 2
     ):
         self.base_url = base_url.rstrip('/')
         self.api_key = api_key
