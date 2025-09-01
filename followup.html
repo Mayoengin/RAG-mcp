@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network RAG System - Startup Flow</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8), 0 0 30px rgba(59, 130, 246, 0.4); }
+        }
+        
+        @keyframes progress-fill {
+            0% { width: 0%; }
+            100% { width: 100%; }
+        }
+        
+        @keyframes fade-in-up {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        
+        .startup-active {
+            animation: pulse-glow 2s infinite;
+        }
+        
+        .progress-bar {
+            animation: progress-fill 3s ease-out;
+        }
+        
+        .fade-in {
+            animation: fade-in-up 0.6s ease-out;
+        }
+        
+        .layer-gradient-1 { background: linear-gradient(135deg, #3B82F6, #1E40AF); }
+        .layer-gradient-2 { background: linear-gradient(135deg, #10B981, #059669); }
+        .layer-gradient-3 { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+        .layer-gradient-4 { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .layer-gradient-5 { background: linear-gradient(135deg, #06B6D4, #0891B2); }
+        .layer-gradient-6 { background: linear-gradient(135deg, #6366F1, #4F46E5); }
+        .layer-gradient-7 { background: linear-gradient(135deg, #EF4444, #DC2626); }
+        .layer-gradient-8 { background: linear-gradient(135deg, #EC4899, #DB2777); }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const NetworkRAGStartupFlow = () => {
+            const [currentPhase, setCurrentPhase] = useState(-1);
+            const [isRunning, setIsRunning] = useState(false);
+            const [showArchitecture, setShowArchitecture] = useState(false);
+            const [showQueryFlow, setShowQueryFlow] = useState(false);
+            const [completedPhases, setCompletedPhases] = useState([]);
+            const [queryStep, setQueryStep] = useState(0);
+            const [isQueryRunning, setIsQueryRunning] = useState(false);
+            const intervalRef = useRef(null);
+            const queryIntervalRef = useRef(null);
+
+            const systemStartupFlow = [
+                {
+                    phase: "Bootstrap",
+                    title: "System Initialization Entry Point",
+                    duration: "0-200ms",
+                    layer: "Entry",
+                    status: "🚀 Network RAG System - Vectorized Health Knowledge Demo",
+                    operations: [
+                        "Create NetworkRAGDemo instance",
+                        "Set use_mock_data=True for demo mode",
+                        "Initialize system architecture preparation"
+                    ],
+                    code: "demo = NetworkRAGDemo()",
+                    intelligence: "🎯 Single entry point orchestrates entire system",
+                    color: "layer-gradient-1",
+                    icon: "🚀"
+                },
+                {
+                    phase: "Adapter Creation",
+                    title: "Multi-Adapter Architecture Setup",
+                    duration: "200ms-800ms",
+                    layer: "Outbound",
+                    status: "📊 Using mock data with real LLM integration",
+                    operations: [
+                        "Create MockMongoDB with vectorized health support",
+                        "Initialize MockNetwork with 7 FTTH OLTs across 4 regions",
+                        "Test LM Studio connection (localhost:1234)",
+                        "Fallback to MockLLM if LM Studio unavailable"
+                    ],
+                    intelligence: "🔧 Smart adapter selection with graceful degradation",
+                    color: "layer-gradient-2",
+                    icon: "🔧"
+                },
+                {
+                    phase: "Controller Orchestration",
+                    title: "Business Logic Controllers Assembly",
+                    duration: "800ms-1.2s",
+                    layer: "Controller",
+                    status: "🧠 Initializing business orchestration controllers",
+                    operations: [
+                        "Create DocumentController with knowledge management",
+                        "Create QueryController with network integration",
+                        "Initialize RAG Fusion Analyzer with 4-strategy search",
+                        "Setup dependency injection across controllers"
+                    ],
+                    intelligence: "⚙️ Clean architecture with port-adapter pattern",
+                    color: "layer-gradient-3",
+                    icon: "🧠"
+                },
+                {
+                    phase: "MCP Server Integration",
+                    title: "Model Context Protocol Tool Registration",
+                    duration: "1.2s-1.6s",
+                    layer: "Inbound",
+                    status: "📡 Registering MCP tools for external access",
+                    operations: [
+                        "Initialize MCP server with controllers",
+                        "Register @mcp.tool() network_query",
+                        "Register @mcp.tool() list_network_devices",
+                        "Register @mcp.tool() get_device_details",
+                        "Register @mcp.tool() manage_health_rules"
+                    ],
+                    intelligence: "🔌 Standardized external interface for AI model integration",
+                    color: "layer-gradient-4",
+                    icon: "📡"
+                },
+                {
+                    phase: "Knowledge Base Initialization",
+                    title: "Vectorized Health Rules Loading",
+                    duration: "1.6s-2.8s",
+                    layer: "Knowledge",
+                    status: "🏥 Loading vectorized health knowledge into mock storage",
+                    operations: [
+                        "Create HealthRulesInitializer instance",
+                        "Load 3 health rule types from knowledge/health_rules.py",
+                        "Generate 384D embeddings with MD5 + semantic boosting",
+                        "Store rules in mock collections with vector support"
+                    ],
+                    intelligence: "🔍 Semantic health knowledge enables intelligent device analysis",
+                    color: "layer-gradient-5",
+                    icon: "🏥"
+                },
+                {
+                    phase: "System Validation",
+                    title: "Architecture Integrity Verification",
+                    duration: "2.8s-3.0s",
+                    layer: "All",
+                    status: "✅ System initialized successfully!",
+                    operations: [
+                        "Verify all adapters are functional",
+                        "Test controller communication",
+                        "Validate MCP tool registration",
+                        "Confirm health rules vectorization",
+                        "Check LLM connectivity status"
+                    ],
+                    intelligence: "🎯 Comprehensive validation ensures system reliability",
+                    color: "layer-gradient-6",
+                    icon: "✅"
+                },
+                {
+                    phase: "Architecture Overview",
+                    title: "System Capabilities Presentation",
+                    duration: "3.0s-3.1s",
+                    layer: "Presentation",
+                    status: "🏗️ NETWORK RAG SYSTEM - ARCHITECTURE OVERVIEW",
+                    operations: [
+                        "Display system features overview",
+                        "Show query execution flow diagram",
+                        "Present vectorization architecture",
+                        "Demonstrate available capabilities"
+                    ],
+                    intelligence: "📊 Clear system capabilities communicate value to users",
+                    color: "layer-gradient-7",
+                    icon: "🏗️"
+                },
+                {
+                    phase: "Demo Ready",
+                    title: "Interactive Demo Mode Selection",
+                    duration: "3.1s+",
+                    layer: "User Interface",
+                    status: "📋 Choose demonstration mode:",
+                    operations: [
+                        "Detect if running interactively (sys.stdin.isatty())",
+                        "Present mode selection menu",
+                        "Handle user choice gracefully",
+                        "Route to appropriate demo mode"
+                    ],
+                    intelligence: "🎮 User-friendly interface adapts to interactive vs batch execution",
+                    color: "layer-gradient-8",
+                    icon: "🎮"
+                }
+            ];
+
+            const queryExecutionFlow = [
+                {
+                    step: 1,
+                    title: "Entry Point",
+                    layer: 1,
+                    description: "User query enters system",
+                    details: "Natural language query received through interface",
+                    timing: "~10ms",
+                    example: "How many FTTH OLTs are in HOBO region?",
+                    color: "bg-blue-500"
+                },
+                {
+                    step: 2,
+                    title: "MCP Reception",
+                    layer: 1,
+                    description: "network_query tool selected",
+                    details: "@mcp.tool() decorator processes request with validation",
+                    timing: "~50ms",
+                    technical: "MCP protocol standardizes external interface",
+                    color: "bg-blue-600"
+                },
+                {
+                    step: 3,
+                    title: "Controller Analysis",
+                    layer: 2,
+                    description: "QueryController processes request",
+                    details: "Business orchestration layer coordinates workflow",
+                    timing: "~100ms",
+                    technical: "Clean architecture separates concerns",
+                    color: "bg-green-500"
+                },
+                {
+                    step: 4,
+                    title: "RAG Intelligence",
+                    layer: 3,
+                    description: "4 parallel strategies analyze query",
+                    details: "Multi-strategy fusion analysis with pattern matching",
+                    timing: "~200ms",
+                    result: "Pattern match: device_listing with HIGH confidence",
+                    strategies: [
+                        "Tool Selection Strategy",
+                        "Document Search Strategy", 
+                        "Health Rule Strategy",
+                        "Context Strategy"
+                    ],
+                    color: "bg-purple-500"
+                },
+                {
+                    step: 5,
+                    title: "Knowledge Application",
+                    layer: 4,
+                    description: "Health rules prepared for application",
+                    details: "Domain expertise rules selected and prepared",
+                    timing: "~50ms",
+                    technical: "Executable health conditions loaded",
+                    color: "bg-orange-500"
+                },
+                {
+                    step: 6,
+                    title: "Vector Search",
+                    layer: 6,
+                    description: "384D similarity search for health rules",
+                    details: "Semantic vector matching with cosine similarity",
+                    timing: "~300ms",
+                    query: "health analysis ftth_olt monitoring",
+                    result: "FTTH OLT Health Framework (similarity: -0.377)",
+                    technical: "MongoDB vector collections with optimized indexing",
+                    color: "bg-indigo-500"
+                },
+                {
+                    step: 7,
+                    title: "Data Retrieval",
+                    layer: 7,
+                    description: "Mock network adapter returns 4 HOBO devices",
+                    details: "Regional filtering and device enumeration",
+                    timing: "~100ms",
+                    result: "4 FTTH OLT devices in HOBO region retrieved",
+                    technical: "Network abstraction with mock/production switching",
+                    color: "bg-cyan-500"
+                },
+                {
+                    step: 8,
+                    title: "Health Scoring",
+                    layer: 6,
+                    description: "Each device analyzed with vector-matched rules",
+                    details: "Intelligent health scoring with device-specific analysis",
+                    timing: "~150ms per device",
+                    deviceResults: [
+                        { name: "OLT17PROP01", score: "100/100", status: "HEALTHY", icon: "✅" },
+                        { name: "OLT18PROP02", score: "30/100", status: "CRITICAL", icon: "🔴", issue: "not managed by Inmanta" },
+                        { name: "OLT19PROP03", score: "0/100", status: "CRITICAL", icon: "🔴", issue: "no services configured" },
+                        { name: "OLT20PROP01", score: "100/100", status: "HEALTHY", icon: "✅" }
+                    ],
+                    color: "bg-red-500"
+                },
+                {
+                    step: 9,
+                    title: "LLM Analysis",
+                    layer: 8,
+                    description: "LM Studio generates professional engineering insights",
+                    details: "Context-aware analysis with network engineering expertise",
+                    timing: "~4-6 seconds",
+                    technical: "Llama 3.2 model processes assembled context",
+                    result: "Professional network analysis with actionable recommendations",
+                    color: "bg-pink-500"
+                },
+                {
+                    step: 10,
+                    title: "Response Assembly",
+                    layer: 1,
+                    description: "Formatted markdown with health analysis and recommendations",
+                    details: "Structured professional output for network engineers",
+                    timing: "~50ms",
+                    technical: "Complete markdown response with visual health indicators",
+                    color: "bg-gray-500"
+                }
+            ];
+
+            const architecturalStrengths = {
+                cleanArchitecture: [
+                    "Dependency Direction: All dependencies point inward toward business logic",
+                    "Interface Segregation: Small, focused port interfaces", 
+                    "Testability: Mock implementations for all external dependencies"
+                ],
+                aiIntegration: [
+                    "Vector Intelligence: 384D semantic understanding",
+                    "RAG Fusion: Multi-strategy query analysis",
+                    "LLM Enhancement: Professional network engineering insights"
+                ],
+                productionReadiness: [
+                    "Graceful Degradation: System works with mock data and without LLM",
+                    "Error Handling: Comprehensive try-catch with user-friendly messages",
+                    "Performance Optimization: Caching and optimized algorithms",
+                    "Scalability: Designed for thousands of devices and rules"
+                ],
+                businessValue: [
+                    "Intelligent Analysis: Beyond simple data retrieval",
+                    "Proactive Health: Identifies issues before they impact services", 
+                    "Knowledge Preservation: Network engineering expertise codified",
+                    "Operational Efficiency: Reduces troubleshooting time from hours to seconds"
+                ]
+            };
+
+            const architectureInitialization = {
+                startupLayers: [
+                    {
+                        order: 1,
+                        name: "Entry Point",
+                        file: "main.py",
+                        initialization: "NetworkRAGDemo() creation",
+                        duration: "~200ms",
+                        color: "bg-blue-500"
+                    },
+                    {
+                        order: 2,
+                        name: "Outbound Adapters",
+                        files: ["mongodb_adapter.py", "network_api_adapter.py", "llama_adapter.py"],
+                        initialization: "Mock adapters with real LLM testing",
+                        duration: "~600ms",
+                        color: "bg-green-500"
+                    },
+                    {
+                        order: 3,
+                        name: "Controller Layer",
+                        files: ["query_controller.py", "document_controller.py"],
+                        initialization: "Business logic orchestration setup",
+                        duration: "~400ms",
+                        color: "bg-purple-500"
+                    },
+                    {
+                        order: 4,
+                        name: "Inbound Interface",
+                        files: ["mcp_server_standard.py"],
+                        initialization: "MCP tool registration (@mcp.tool decorators)",
+                        duration: "~400ms",
+                        color: "bg-orange-500"
+                    },
+                    {
+                        order: 5,
+                        name: "Knowledge Layer",
+                        files: ["health_rules.py", "health_rules_initializer.py"],
+                        initialization: "Vectorized health rules loading (384D embeddings)",
+                        duration: "~1200ms",
+                        color: "bg-cyan-500"
+                    },
+                    {
+                        order: 6,
+                        name: "Intelligence Services",
+                        files: ["rag_fusion_analyzer.py", "knowledge_driven_health.py"],
+                        initialization: "RAG intelligence setup within controllers",
+                        duration: "~200ms",
+                        color: "bg-indigo-500"
+                    }
+                ],
+                totalStartupTime: "~3.2 seconds",
+                criticalPath: "LM Studio connection test → Health rules vectorization",
+                fallbackStrategy: "All components have graceful degradation modes"
+            };
+
+            const startStartup = () => {
+                setIsRunning(true);
+                setCurrentPhase(-1);
+                setCompletedPhases([]);
+                
+                let phaseIndex = 0;
+                const phaseInterval = 2000;
+                
+                intervalRef.current = setInterval(() => {
+                    if (phaseIndex < systemStartupFlow.length) {
+                        setCurrentPhase(phaseIndex);
+                        if (phaseIndex > 0) {
+                            setCompletedPhases(prev => [...prev, phaseIndex - 1]);
+                        }
+                        phaseIndex++;
+                    } else {
+                        setCompletedPhases(prev => [...prev, systemStartupFlow.length - 1]);
+                        setCurrentPhase(-1);
+                        setIsRunning(false);
+                        clearInterval(intervalRef.current);
+                    }
+                }, phaseInterval);
+            };
+
+            const stopStartup = () => {
+                setIsRunning(false);
+                setCurrentPhase(-1);
+                clearInterval(intervalRef.current);
+            };
+
+            const resetStartup = () => {
+                setIsRunning(false);
+                setCurrentPhase(-1);
+                setCompletedPhases([]);
+                clearInterval(intervalRef.current);
+            };
+
+            const startQueryFlow = () => {
+                setIsQueryRunning(true);
+                setQueryStep(0);
+                
+                const stepInterval = 2500;
+                
+                queryIntervalRef.current = setInterval(() => {
+                    setQueryStep(prev => {
+                        if (prev < queryExecutionFlow.length - 1) {
+                            return prev + 1;
+                        } else {
+                            setIsQueryRunning(false);
+                            clearInterval(queryIntervalRef.current);
+                            return prev;
+                        }
+                    });
+                }, stepInterval);
+            };
+
+            const resetQueryFlow = () => {
+                setIsQueryRunning(false);
+                setQueryStep(0);
+                if (queryIntervalRef.current) {
+                    clearInterval(queryIntervalRef.current);
+                }
+            };
+
+            useEffect(() => {
+                return () => {
+                    if (intervalRef.current) {
+                        clearInterval(intervalRef.current);
+                    }
+                    if (queryIntervalRef.current) {
+                        clearInterval(queryIntervalRef.current);
+                    }
+                };
+            }, []);
+
+            const getTotalProgress = () => {
+                if (!isRunning && completedPhases.length === 0) return 0;
+                return ((completedPhases.length + (currentPhase >= 0 ? 1 : 0)) / systemStartupFlow.length) * 100;
+            };
+
+            return (
+                <div className="w-full max-w-7xl mx-auto p-6 bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 min-h-screen text-white">
+                    {/* Header */}
+                    <div className="text-center mb-8">
+                        <h1 className="text-6xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4">
+                            Network RAG System
+                        </h1>
+                        <h2 className="text-3xl font-bold text-gray-300 mb-2">Startup & Query Flow Visualization</h2>
+                        <p className="text-xl text-gray-400 mb-2">Production System: 3.2s Boot • 12-15s Query Execution</p>
+                        <div className="bg-yellow-900 bg-opacity-50 border border-yellow-600 rounded-lg p-3 mb-6">
+                            <p className="text-yellow-200 text-sm">
+                                <strong>Note:</strong> System startup (3.2s) vs Query execution (12-15s due to LLM processing)
+                            </p>
+                        </div>
+                        
+                        {/* Control Panel */}
+                        <div className="flex justify-center gap-4 mb-8 flex-wrap">
+                            <button
+                                onClick={startStartup}
+                                disabled={isRunning}
+                                className={`px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 ${
+                                    isRunning 
+                                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                                        : 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg hover:shadow-green-500/25'
+                                }`}
+                            >
+                                🚀 Start System Boot
+                            </button>
+                            <button
+                                onClick={stopStartup}
+                                disabled={!isRunning}
+                                className={`px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 ${
+                                    !isRunning 
+                                        ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                                        : 'bg-gradient-to-r from-red-500 to-red-600 text-white shadow-lg hover:shadow-red-500/25'
+                                }`}
+                            >
+                                ⏹️ Stop
+                            </button>
+                            <button
+                                onClick={resetStartup}
+                                className="px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 bg-gradient-to-r from-gray-600 to-gray-700 text-white shadow-lg hover:shadow-gray-500/25"
+                            >
+                                🔄 Reset
+                            </button>
+                            <button
+                                onClick={() => setShowArchitecture(!showArchitecture)}
+                                className="px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg hover:shadow-blue-500/25"
+                            >
+                                🏗️ Architecture
+                            </button>
+                            <button
+                                onClick={() => setShowQueryFlow(!showQueryFlow)}
+                                className="px-6 py-3 rounded-xl font-semibold transition-all transform hover:scale-105 bg-gradient-to-r from-purple-600 to-purple-700 text-white shadow-lg hover:shadow-purple-500/25"
+                            >
+                                🔍 Query Flow (12-15s)
+                            </button>
+                        </div>
+
+                        {/* Overall Progress */}
+                        {!showArchitecture && !showQueryFlow && (
+                            <div className="mb-8">
+                                <div className="flex justify-between text-sm text-gray-400 mb-2">
+                                    <span>System Initialization Progress</span>
+                                    <span>{Math.round(getTotalProgress())}% Complete</span>
+                                </div>
+                                <div className="w-full bg-gray-800 rounded-full h-4 overflow-hidden">
+                                    <div 
+                                        className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 h-4 transition-all duration-1000 ease-out"
+                                        style={{ width: `${getTotalProgress()}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {showQueryFlow ? (
+                        /* Query Execution Flow */
+                        <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl mb-8">
+                            <h3 className="text-3xl font-bold text-center mb-2 text-purple-400">
+                                Live Query Execution Flow
+                            </h3>
+                            <p className="text-center text-gray-400 mb-6">
+                                Example: "How many FTTH OLTs are in HOBO region?" • 10 Steps • 12-15 seconds
+                            </p>
+                            
+                            {/* Query Flow Controls */}
+                            <div className="flex justify-center gap-4 mb-8">
+                                <button
+                                    onClick={startQueryFlow}
+                                    disabled={isQueryRunning}
+                                    className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                                        isQueryRunning 
+                                            ? 'bg-gray-600 text-gray-400 cursor-not-allowed' 
+                                            : 'bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:shadow-purple-500/25'
+                                    }`}
+                                >
+                                    ▶️ Execute Query
+                                </button>
+                                <button
+                                    onClick={resetQueryFlow}
+                                    className="px-6 py-3 rounded-xl font-semibold transition-all bg-gradient-to-r from-gray-600 to-gray-700 text-white"
+                                >
+                                    🔄 Reset Query
+                                </button>
+                            </div>
+
+                            {/* Query Progress */}
+                            <div className="mb-8">
+                                <div className="flex justify-between text-sm text-gray-400 mb-2">
+                                    <span>Query Execution Progress</span>
+                                    <span>{Math.round(((queryStep + 1) / queryExecutionFlow.length) * 100)}% Complete</span>
+                                </div>
+                                <div className="w-full bg-gray-700 rounded-full h-3 overflow-hidden">
+                                    <div 
+                                        className="bg-gradient-to-r from-purple-500 via-pink-500 to-red-500 h-3 transition-all duration-1000 ease-out"
+                                        style={{ width: `${((queryStep + 1) / queryExecutionFlow.length) * 100}%` }}
+                                    ></div>
+                                </div>
+                            </div>
+
+                            {/* Query Steps */}
+                            <div className="space-y-4">
+                                {queryExecutionFlow.map((step, index) => {
+                                    const isActive = isQueryRunning && queryStep === index;
+                                    const isCompleted = queryStep > index;
+                                    
+                                    return (
+                                        <div 
+                                            key={index}
+                                            className={`transition-all duration-500 ${
+                                                isActive ? 'scale-105' : isCompleted ? 'opacity-70' : 'opacity-40'
+                                            }`}
+                                        >
+                                            <div className={`${step.color} p-6 rounded-xl shadow-lg border-2 ${
+                                                isActive ? 'border-yellow-400' : isCompleted ? 'border-green-400' : 'border-gray-600'
+                                            }`}>
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div className="flex items-center gap-4">
+                                                        <div className="bg-black bg-opacity-30 rounded-full w-10 h-10 flex items-center justify-center">
+                                                            <span className="text-white font-bold">{step.step}</span>
+                                                        </div>
+                                                        <div>
+                                                            <h4 className="text-xl font-bold text-white">{step.title}</h4>
+                                                            <p className="text-gray-200">{step.description}</p>
+                                                            <p className="text-gray-300 text-sm">Layer {step.layer} • {step.timing}</p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {isActive && (
+                                                        <div className="text-yellow-300 font-bold">PROCESSING...</div>
+                                                    )}
+                                                    {isCompleted && (
+                                                        <div className="text-green-300">✅</div>
+                                                    )}
+                                                </div>
+
+                                                <div className="bg-black bg-opacity-20 p-4 rounded-lg mb-4">
+                                                    <p className="text-gray-200">{step.details}</p>
+                                                    {step.technical && (
+                                                        <p className="text-gray-300 text-sm mt-2">🔧 {step.technical}</p>
+                                                    )}
+                                                </div>
+
+                                                {step.example && (
+                                                    <div className="bg-blue-900 bg-opacity-50 p-3 rounded-lg mb-4">
+                                                        <p className="text-blue-200 font-mono">"{step.example}"</p>
+                                                    </div>
+                                                )}
+
+                                                {step.strategies && (
+                                                    <div className="mb-4">
+                                                        <h5 className="text-white font-bold mb-2">RAG Strategies:</h5>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {step.strategies.map((strategy, sIdx) => (
+                                                                <div key={sIdx} className="bg-black bg-opacity-20 p-2 rounded text-gray-300 text-sm">
+                                                                    • {strategy}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {step.query && (
+                                                    <div className="mb-4">
+                                                        <p className="text-white font-bold mb-1">Vector Query:</p>
+                                                        <p className="text-purple-300 font-mono text-sm bg-black bg-opacity-20 p-2 rounded">"{step.query}"</p>
+                                                    </div>
+                                                )}
+
+                                                {step.deviceResults && (
+                                                    <div className="mb-4">
+                                                        <h5 className="text-white font-bold mb-2">Device Health Analysis:</h5>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                            {step.deviceResults.map((device, dIdx) => (
+                                                                <div key={dIdx} className="bg-black bg-opacity-20 p-3 rounded-lg">
+                                                                    <div className="flex items-center justify-between">
+                                                                        <span className="text-white font-bold">{device.name}</span>
+                                                                        <span className={`${device.status === 'HEALTHY' ? 'text-green-400' : 'text-red-400'} font-bold`}>
+                                                                            {device.icon} {device.score}
+                                                                        </span>
+                                                                    </div>
+                                                                    <p className={`text-sm ${device.status === 'HEALTHY' ? 'text-green-300' : 'text-red-300'}`}>
+                                                                        {device.status}
+                                                                    </p>
+                                                                    {device.issue && (
+                                                                        <p className="text-red-300 text-sm mt-1">Issue: {device.issue}</p>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {step.result && (
+                                                    <div className="bg-green-900 bg-opacity-30 p-3 rounded-lg">
+                                                        <p className="text-green-300 font-medium">Result: {step.result}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Architectural Strengths */}
+                            <div className="mt-12 bg-gradient-to-r from-indigo-900 to-purple-900 p-8 rounded-xl">
+                                <h4 className="text-2xl font-bold text-white mb-6 text-center">Key Architectural Strengths</h4>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <h5 className="text-lg font-bold text-blue-300 mb-3">Clean Architecture</h5>
+                                        <ul className="space-y-2">
+                                            {architecturalStrengths.cleanArchitecture.map((strength, idx) => (
+                                                <li key={idx} className="text-blue-200 text-sm flex items-start gap-2">
+                                                    <span className="text-blue-400 mt-1">•</span>
+                                                    {strength}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    
+                                    <div>
+                                        <h5 className="text-lg font-bold text-purple-300 mb-3">AI Integration</h5>
+                                        <ul className="space-y-2">
+                                            {architecturalStrengths.aiIntegration.map((strength, idx) => (
+                                                <li key={idx} className="text-purple-200 text-sm flex items-start gap-2">
+                                                    <span className="text-purple-400 mt-1">•</span>
+                                                    {strength}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    
+                                    <div>
+                                        <h5 className="text-lg font-bold text-green-300 mb-3">Production Readiness</h5>
+                                        <ul className="space-y-2">
+                                            {architecturalStrengths.productionReadiness.map((strength, idx) => (
+                                                <li key={idx} className="text-green-200 text-sm flex items-start gap-2">
+                                                    <span className="text-green-400 mt-1">•</span>
+                                                    {strength}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                    
+                                    <div>
+                                        <h5 className="text-lg font-bold text-yellow-300 mb-3">Business Value</h5>
+                                        <ul className="space-y-2">
+                                            {architecturalStrengths.businessValue.map((strength, idx) => (
+                                                <li key={idx} className="text-yellow-200 text-sm flex items-start gap-2">
+                                                    <span className="text-yellow-400 mt-1">•</span>
+                                                    {strength}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-6 text-center">
+                                    <p className="text-gray-300 text-sm italic">
+                                        This architecture successfully combines modern software engineering practices with cutting-edge AI techniques 
+                                        to create a production-ready network intelligence platform.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : showArchitecture ? (
+                        /* Architecture Overview */
+                        <div className="bg-gray-800 rounded-2xl p-8 shadow-2xl mb-8">
+                            <h3 className="text-3xl font-bold text-center mb-8 text-blue-400">
+                                Startup Layer Dependencies
+                            </h3>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                                {architectureInitialization.startupLayers.map((layer, idx) => (
+                                    <div key={idx} className="bg-gray-700 p-6 rounded-xl border border-gray-600">
+                                        <div className="flex items-center gap-3 mb-4">
+                                            <div className={`w-8 h-8 ${layer.color} rounded-full flex items-center justify-center text-white font-bold text-sm`}>
+                                                {layer.order}
+                                            </div>
+                                            <h4 className="font-bold text-lg text-white">{layer.name}</h4>
+                                        </div>
+                                        
+                                        <div className="space-y-3">
+                                            <div>
+                                                <span className="text-gray-400 text-sm">Files:</span>
+                                                {Array.isArray(layer.files) ? (
+                                                    <div className="mt-1 space-y-1">
+                                                        {layer.files.map((file, fidx) => (
+                                                            <code key={fidx} className="block text-xs bg-gray-800 text-blue-400 px-2 py-1 rounded">
+                                                                {file}
+                                                            </code>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <code className="block text-xs bg-gray-800 text-blue-400 px-2 py-1 rounded mt-1">
+                                                        {layer.file}
+                                                    </code>
+                                                )}
+                                            </div>
+                                            
+                                            <div>
+                                                <span className="text-gray-400 text-sm">Process:</span>
+                                                <p className="text-gray-300 text-sm mt-1">{layer.initialization}</p>
+                                            </div>
+                                            
+                                            <div>
+                                                <span className="text-gray-400 text-sm">Duration:</span>
+                                                <span className="text-green-400 text-sm font-mono ml-2">{layer.duration}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="bg-blue-900 p-6 rounded-xl border border-blue-700">
+                                    <h4 className="font-bold text-blue-300 mb-2">System Startup Time</h4>
+                                    <p className="text-2xl font-bold text-blue-100">{architectureInitialization.totalStartupTime}</p>
+                                    <p className="text-blue-200 text-sm mt-1">Initialize all components</p>
+                                </div>
+                                <div className="bg-orange-900 p-6 rounded-xl border border-orange-700">
+                                    <h4 className="font-bold text-orange-300 mb-2">Query Execution Time</h4>
+                                    <p className="text-2xl font-bold text-orange-100">12-15 seconds</p>
+                                    <p className="text-orange-200 text-sm mt-1">Full query with LLM analysis</p>
+                                </div>
+                                <div className="bg-purple-900 p-6 rounded-xl border border-purple-700">
+                                    <h4 className="font-bold text-purple-300 mb-2">Critical Path</h4>
+                                    <p className="text-purple-100 text-sm">{architectureInitialization.criticalPath}</p>
+                                </div>
+                                <div className="bg-green-900 p-6 rounded-xl border border-green-700">
+                                    <h4 className="font-bold text-green-300 mb-2">Reliability</h4>
+                                    <p className="text-green-100 text-sm">{architectureInitialization.fallbackStrategy}</p>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        /* Startup Flow Visualization */
+                        <div className="space-y-6">
+                            {systemStartupFlow.map((phase, index) => {
+                                const isActive = currentPhase === index;
+                                const isCompleted = completedPhases.includes(index);
+                                
+                                return (
+                                    <div 
+                                        key={index}
+                                        className={`transition-all duration-1000 ${
+                                            isActive ? 'startup-active scale-105' : isCompleted ? 'opacity-80' : 'opacity-40'
+                                        } ${isActive || isCompleted ? 'fade-in' : ''}`}
+                                    >
+                                        <div className={`${phase.color} p-8 rounded-2xl shadow-2xl border-2 ${
+                                            isActive ? 'border-white' : isCompleted ? 'border-green-400' : 'border-gray-600'
+                                        }`}>
+                                            {/* Phase Header */}
+                                            <div className="flex items-center justify-between mb-6">
+                                                <div className="flex items-center gap-4">
+                                                    <div className="text-6xl">{phase.icon}</div>
+                                                    <div>
+                                                        <div className="flex items-center gap-3">
+                                                            <h3 className="text-2xl font-bold text-white">
+                                                                Phase {index + 1}: {phase.phase}
+                                                            </h3>
+                                                            {isCompleted && <span className="text-green-300">✅</span>}
+                                                            {isActive && <span className="text-yellow-300">⚡</span>}
+                                                        </div>
+                                                        <h4 className="text-xl text-gray-100 font-medium">{phase.title}</h4>
+                                                        <p className="text-gray-200 text-sm mt-1">{phase.layer} Layer • {phase.duration}</p>
+                                                    </div>
+                                                </div>
+                                                
+                                                {isActive && (
+                                                    <div className="text-right">
+                                                        <div className="text-yellow-300 font-bold text-lg">INITIALIZING...</div>
+                                                        <div className="w-32 bg-gray-700 rounded-full h-2 mt-2">
+                                                            <div className="bg-yellow-300 h-2 rounded-full progress-bar"></div>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Status */}
+                                            <div className="bg-black bg-opacity-30 p-4 rounded-lg mb-6">
+                                                <p className="text-gray-100 font-mono text-lg">{phase.status}</p>
+                                            </div>
+
+                                            {/* Operations */}
+                                            <div className="mb-6">
+                                                <h5 className="font-bold text-white mb-3 text-lg">Operations:</h5>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {phase.operations.map((operation, opIdx) => (
+                                                        <div key={opIdx} className="flex items-start gap-3 bg-black bg-opacity-20 p-3 rounded-lg">
+                                                            <div className="w-6 h-6 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-white text-sm font-bold mt-0.5">
+                                                                {opIdx + 1}
+                                                            </div>
+                                                            <span className="text-gray-100">{operation}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Code Example */}
+                                            {phase.code && (
+                                                <div className="mb-6">
+                                                    <h5 className="font-bold text-white mb-3">Code:</h5>
+                                                    <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
+                                                        <code className="text-green-400 font-mono">{phase.code}</code>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Intelligence Insight */}
+                                            <div className="bg-gradient-to-r from-blue-900 to-purple-900 bg-opacity-50 p-4 rounded-lg">
+                                                <h5 className="font-bold text-blue-200 mb-2">Intelligence Insight:</h5>
+                                                <p className="text-blue-100">{phase.intelligence}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <div className="mt-12 text-center">
+                        <div className="bg-gray-800 p-6 rounded-xl">
+                            <h3 className="text-2xl font-bold text-white mb-4">Key Startup Characteristics</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
+                                <div className="bg-green-900 p-4 rounded-lg">
+                                    <h4 className="font-bold text-green-300 mb-2">Graceful Degradation</h4>
+                                    <p className="text-green-100">LM Studio unavailable → MockLLM fallback</p>
+                                </div>
+                                <div className="bg-blue-900 p-4 rounded-lg">
+                                    <h4 className="font-bold text-blue-300 mb-2">Vectorized Knowledge</h4>
+                                    <p className="text-blue-100">3 health rules → 1,152 vector dimensions</p>
+                                </div>
+                                <div className="bg-purple-900 p-4 rounded-lg">
+                                    <h4 className="font-bold text-purple-300 mb-2">Smart Initialization</h4>
+                                    <p className="text-purple-100">Mock data with real LLM for optimal demo</p>
+                                </div>
+                                <div className="bg-orange-900 p-4 rounded-lg">
+                                    <h4 className="font-bold text-orange-300 mb-2">Interactive Detection</h4>
+                                    <p className="text-orange-100">Adapts UI based on execution environment</p>
+                                </div>
+                                <div className="bg-cyan-900 p-4 rounded-lg">
+                                    <h4 className="font-bold text-cyan-300 mb-2">Comprehensive Validation</h4>
+                                    <p className="text-cyan-100">Every layer verified before proceeding</p>
+                                </div>
+                                <div className="bg-red-900 p-4 rounded-lg">
+                                    <h4 className="font-bold text-red-300 mb-2">Performance Optimized</h4>
+                                    <p className="text-red-100">~3.2s startup for complete RAG system</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<NetworkRAGStartupFlow />, document.getElementById('root'));
+    </script>
+</body>
+</html>
