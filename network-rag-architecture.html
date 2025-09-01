@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network RAG System Architecture</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .lucide {
+            width: 1.5rem;
+            height: 1.5rem;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Simple icon components (replacing lucide-react)
+        const Icons = {
+            ArrowDown: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>,
+            ChevronRight: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7"/></svg>,
+            Shield: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>,
+            Settings: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>,
+            Brain: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>,
+            Database: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>,
+            Network: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="16" y="16" width="6" height="6" rx="1"/><rect x="2" y="16" width="6" height="6" rx="1"/><rect x="9" y="2" width="6" height="6" rx="1"/><path d="M5 16v-3a1 1 0 011-1h12a1 1 0 011 1v3"/><path d="M12 12V8"/></svg>,
+            Server: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>,
+            Layers: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polygon points="12,2 2,7 12,12 22,7 12,2"/><polyline points="2,17 12,22 22,17"/><polyline points="2,12 12,17 22,12"/></svg>,
+            Cpu: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>,
+            Target: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>,
+            Clock: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>,
+            Code: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><polyline points="16,18 22,12 16,6"/><polyline points="8,6 2,12 8,18"/></svg>,
+            CheckCircle: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/></svg>,
+            Search: () => <svg className="lucide" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        };
+
+        const NetworkRAGArchitecture = () => {
+            const [activeLayer, setActiveLayer] = useState(null);
+            const [showFlow, setShowFlow] = useState(false);
+            const [flowStep, setFlowStep] = useState(0);
+            const [autoPlay, setAutoPlay] = useState(false);
+
+            const actualLayers = [
+                {
+                    id: 1,
+                    title: "Inbound Interface Layer",
+                    icon: <Icons.Shield />,
+                    color: "bg-blue-500",
+                    gradient: "from-blue-500 to-blue-600",
+                    description: "Standardized MCP protocol entry points",
+                    file: "src/network_rag/inbound/mcp_server_standard.py",
+                    why: "SINGLE ENTRY POINT - All external requests funnel through standardized MCP protocol with intelligent strategy execution",
+                    keyLogic: [
+                        "4 MCP Tools: network_query, list_network_devices, get_device_details, manage_health_rules",
+                        "Intelligent Strategy Execution: Each tool uses different analysis approaches",
+                        "Graceful Error Handling: Fallback responses maintain system reliability",
+                        "Context Assembly: Prepares structured data for downstream processing"
+                    ],
+                    performance: "~50ms request validation & routing"
+                },
+                {
+                    id: 2,
+                    title: "Controller Layer",
+                    icon: <Icons.Settings />,
+                    color: "bg-green-500", 
+                    gradient: "from-green-500 to-green-600",
+                    description: "Business logic orchestration without external dependencies",
+                    files: [
+                        "src/network_rag/controller/query_controller.py",
+                        "src/network_rag/controller/document_controller.py"
+                    ],
+                    why: "BUSINESS ORCHESTRATION - Coordinates complex workflows without knowing about external systems",
+                    keyLogic: [
+                        "Query Controller: RAG-enhanced intelligent query processing",
+                        "Document Controller: Knowledge base document management",
+                        "Business validation ensures data quality",
+                        "Performance analytics track system health"
+                    ],
+                    performance: "~200ms orchestration & coordination"
+                },
+                {
+                    id: 3,
+                    title: "Intelligence Services Layer",
+                    icon: <Icons.Brain />,
+                    color: "bg-purple-500",
+                    gradient: "from-purple-500 to-purple-600", 
+                    description: "Core AI intelligence that makes the system 'smart'",
+                    files: [
+                        "src/network_rag/services/rag_fusion_analyzer.py",
+                        "src/network_rag/services/knowledge_driven_health.py", 
+                        "src/network_rag/services/health_rules_initializer.py",
+                        "src/network_rag/services/schema_aware_context.py"
+                    ],
+                    why: "AI INTELLIGENCE HUB - The brain that transforms raw queries into intelligent insights using sophisticated ML techniques",
+                    keyLogic: [
+                        "RAG Fusion Analyzer: Multi-strategy document search (4 approaches)",
+                        "Knowledge-Driven Health: 384D vector search with rule matching",
+                        "Health Rules Initializer: MongoDB population with vectorized rules",
+                        "Schema-Aware Context: LLM query preparation and optimization"
+                    ],
+                    performance: "~300ms multi-strategy analysis + caching"
+                },
+                {
+                    id: 4,
+                    title: "Knowledge Layer",
+                    icon: <Icons.Database />,
+                    color: "bg-orange-500",
+                    gradient: "from-orange-500 to-orange-600",
+                    description: "Encapsulated domain expertise in executable form",
+                    file: "src/network_rag/knowledge/health_rules.py",
+                    why: "DOMAIN EXPERTISE - Network engineering knowledge codified into executable rules with device-specific intelligence",
+                    keyLogic: [
+                        "Static Health Rules: FTTH OLT, Mobile Modem, Environment-specific",
+                        "Scoring Algorithms: Base 100 points → Apply penalties → Categorize",
+                        "Recommendation Engines: Context-aware suggestions with priorities",
+                        "Device-Specific Logic: Different rule sets for different equipment"
+                    ],
+                    performance: "~100ms rule evaluation per device"
+                },
+                {
+                    id: 5,
+                    title: "Models & Ports Layer",
+                    icon: <Icons.Layers />,
+                    color: "bg-teal-500",
+                    gradient: "from-teal-500 to-teal-600",
+                    description: "Domain contracts and abstractions without implementation",
+                    files: [
+                        "src/network_rag/models/document.py",
+                        "src/network_rag/models/ports/ (NetworkPort, VectorSearchPort, LLMPort)",
+                        "src/network_rag/models/ftth_olt_resource.py"
+                    ],
+                    why: "CLEAN ARCHITECTURE - Defines contracts without implementation details, enables testing and flexible deployments",
+                    keyLogic: [
+                        "Port Interfaces: Abstract network data access, vector operations, AI models",
+                        "Domain Models: Document models, FTTH OLT resources, Health rule objects",
+                        "Business Validation: Ensures data quality and consistency",
+                        "Dependency Injection: Enables flexible testing and deployment"
+                    ],
+                    performance: "~10ms model validation & abstraction"
+                },
+                {
+                    id: 6,
+                    title: "Vector & Knowledge Storage", 
+                    icon: <Icons.Server />,
+                    color: "bg-indigo-500",
+                    gradient: "from-indigo-500 to-indigo-600",
+                    description: "Specialized MongoDB storage for vectorized knowledge",
+                    why: "SEMANTIC STORAGE - Multi-collection architecture optimized for different types of vectorized knowledge with sophisticated search",
+                    keyLogic: [
+                        "health_rules: Rule documents with complete metadata and conditions",
+                        "health_vectors: 384D embeddings for semantic health rule search",
+                        "vectors: General document embeddings for knowledge search",
+                        "Vector Mathematics: MD5 + semantic boosting with cosine similarity"
+                    ],
+                    performance: "~150ms vector search with optimized indexing"
+                },
+                {
+                    id: 7,
+                    title: "Network Data Sources",
+                    icon: <Icons.Network />,
+                    color: "bg-cyan-500",
+                    gradient: "from-cyan-500 to-cyan-600", 
+                    description: "Network infrastructure abstraction layer",
+                    file: "src/network_rag/outbound/network_api_adapter.py",
+                    why: "INFRASTRUCTURE ABSTRACTION - Hides network complexity while providing consistent data models for analysis",
+                    keyLogic: [
+                        "Mock/Real Data Switching: Demo vs production environment support",
+                        "Regional Filtering: HOBO, GENT, ROES, ASSE region support",
+                        "Device Models: 7 FTTH OLTs with health-relevant attributes",
+                        "Consistent Schema: Regardless of underlying data source"
+                    ],
+                    performance: "~100ms data fetch with regional filtering"
+                },
+                {
+                    id: 8,
+                    title: "AI Services Layer",
+                    icon: <Icons.Cpu />,
+                    color: "bg-red-500",
+                    gradient: "from-red-500 to-red-600",
+                    description: "Intelligent analysis beyond raw data processing",
+                    file: "src/network_rag/outbound/llama_adapter.py", 
+                    why: "INTELLIGENT INSIGHTS - Transforms raw network data into professional engineering analysis with context-aware recommendations",
+                    keyLogic: [
+                        "LM Studio Integration: Local Llama model on localhost:1234",
+                        "Context-Aware Responses: Using assembled device data and health scores",
+                        "Professional Analysis: Network engineering language and recommendations",
+                        "Fallback Mechanisms: Graceful handling when LLM unavailable"
+                    ],
+                    performance: "4-6s intelligent analysis generation"
+                }
+            ];
+
+            return (
+                <div className="w-full max-w-7xl mx-auto p-6 bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+                    <div className="mb-8 text-center">
+                        <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+                            Network RAG System Architecture
+                        </h1>
+                        <p className="text-xl text-gray-600 mb-2">Production 8-Layer Knowledge-Driven Health Intelligence</p>
+                        <p className="text-lg text-gray-500 mb-8">384D Vector • MongoDB • RAG Fusion • Intelligent Health Analysis</p>
+                    </div>
+
+                    <div className="space-y-6">
+                        {actualLayers.map((layer, index) => (
+                            <div key={layer.id} className="relative">
+                                <div
+                                    className={`p-8 rounded-2xl border-2 cursor-pointer transition-all duration-300 ${
+                                        activeLayer === layer.id
+                                            ? 'border-indigo-500 bg-white shadow-2xl scale-102 transform'
+                                            : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-lg hover:scale-101 transform'
+                                    }`}
+                                    onClick={() => setActiveLayer(activeLayer === layer.id ? null : layer.id)}
+                                >
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-6">
+                                            <div className={`p-4 rounded-xl bg-gradient-to-r ${layer.gradient} text-white shadow-lg`}>
+                                                {layer.icon}
+                                            </div>
+                                            <div>
+                                                <h3 className="text-2xl font-bold text-gray-800 mb-2">
+                                                    Layer {layer.id}: {layer.title}
+                                                </h3>
+                                                <p className="text-gray-600 text-lg">{layer.description}</p>
+                                                {layer.file && (
+                                                    <p className="text-sm text-blue-600 font-mono mt-2 bg-blue-50 px-3 py-1 rounded-lg inline-block">
+                                                        📁 {layer.file}
+                                                    </p>
+                                                )}
+                                                {layer.files && (
+                                                    <div className="mt-2 space-y-1">
+                                                        {layer.files.map((file, idx) => (
+                                                            <p key={idx} className="text-sm text-blue-600 font-mono bg-blue-50 px-3 py-1 rounded-lg inline-block mr-2 mb-1">
+                                                                📁 {file}
+                                                            </p>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <Icons.ChevronRight />
+                                    </div>
+
+                                    {activeLayer === layer.id && (
+                                        <div className="mt-8 pt-8 border-t border-gray-200 space-y-8">
+                                            
+                                            {/* WHY Section */}
+                                            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 p-6 rounded-xl border-l-4 border-yellow-500">
+                                                <h4 className="font-bold text-yellow-800 mb-3 text-lg flex items-center gap-2">
+                                                    <Icons.Target />
+                                                    WHY THIS LAYER EXISTS
+                                                </h4>
+                                                <p className="text-yellow-700 text-lg leading-relaxed">{layer.why}</p>
+                                            </div>
+
+                                            {/* Key Logic */}
+                                            <div>
+                                                <h4 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
+                                                    <Icons.Code />
+                                                    Key Implementation Logic
+                                                </h4>
+                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                                                    {layer.keyLogic.map((logic, idx) => (
+                                                        <div key={idx} className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                                                            <div className="w-3 h-3 bg-indigo-500 rounded-full mt-2 flex-shrink-0"></div>
+                                                            <span className="text-gray-700 leading-relaxed">{logic}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Performance */}
+                                            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-200">
+                                                <h4 className="font-bold text-blue-800 mb-3 text-lg flex items-center gap-2">
+                                                    <Icons.Clock />
+                                                    Performance Characteristics
+                                                </h4>
+                                                <p className="text-blue-700 text-lg font-medium">{layer.performance}</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Connection Arrow */}
+                                {index < actualLayers.length - 1 && (
+                                    <div className="flex justify-center py-4">
+                                        <div className="bg-gradient-to-b from-gray-300 to-gray-400 rounded-full p-2">
+                                            <Icons.ArrowDown />
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+
+                        {/* Performance Summary */}
+                        <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+                                <div className="text-3xl font-bold text-blue-600 mb-2">12-15s</div>
+                                <div className="text-sm text-blue-700 font-medium">Total Analysis</div>
+                                <div className="text-xs text-gray-500 mt-1">Complete intelligence</div>
+                            </div>
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+                                <div className="text-3xl font-bold text-green-600 mb-2">384D</div>
+                                <div className="text-sm text-green-700 font-medium">Vector Space</div>
+                                <div className="text-xs text-gray-500 mt-1">Semantic intelligence</div>
+                            </div>
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+                                <div className="text-3xl font-bold text-purple-600 mb-2">4</div>
+                                <div className="text-sm text-purple-700 font-medium">RAG Strategies</div>
+                                <div className="text-xs text-gray-500 mt-1">Parallel analysis</div>
+                            </div>
+                            <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 text-center">
+                                <div className="text-3xl font-bold text-orange-600 mb-2">8</div>
+                                <div className="text-sm text-orange-700 font-medium">Architecture Layers</div>
+                                <div className="text-xs text-gray-500 mt-1">Clean separation</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<NetworkRAGArchitecture />, document.getElementById('root'));
+    </script>
+</body>
+</html>
